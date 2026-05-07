@@ -5,6 +5,7 @@ import DashboardPage from "./pages/DashboardPage";
 import AssetsPage from "./pages/AssetsPage";
 import AlertsPage from "./pages/AlertsPage";
 import EventsPage from "./pages/EventsPage";
+import SettingsPage from "./pages/SettingsPage";
 import { LayoutDashboard, Shield, AlertTriangle, Activity, LogOut, Settings } from "lucide-react";
 import "./index.css";
 
@@ -56,7 +57,7 @@ function AppShell() {
           <Route path="/assets" element={<ProtectedRoute><AssetsPage /></ProtectedRoute>} />
           <Route path="/events" element={<ProtectedRoute><EventsPage /></ProtectedRoute>} />
           <Route path="/alerts" element={<ProtectedRoute><AlertsPage /></ProtectedRoute>} />
-          <Route path="/settings" element={<ProtectedRoute><div className="fade-in"><div className="page-header"><h2>Settings</h2><p>Configuration coming in v0.2</p></div></div></ProtectedRoute>} />
+          <Route path="/settings" element={<ProtectedRoute><SettingsPage /></ProtectedRoute>} />
         </Routes>
       </main>
     </div>

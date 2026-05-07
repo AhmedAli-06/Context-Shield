@@ -90,3 +90,72 @@ class TestDashboard:
         assert "open_alerts" in data
         assert "avg_trust_score" in data
         assert "events_today" in data
+
+
+class TestSessions:
+    async def test_list_sessions_empty(self, client, auth_headers):
+        resp = await client.get("/api/v1/sessions/", headers=auth_headers)
+        assert resp.status_code == 200
+        assert resp.json() == []
+
+    async def test_active_sessions_empty(self, client, auth_headers):
+        resp = await client.get("/api/v1/sessions/active", headers=auth_headers)
+        assert resp.status_code == 200
+        assert resp.json() == []
+
+    async def test_get_session_not_found(self, client, auth_headers):
+        resp = await client.get("/api/v1/sessions/00000000-0000-0000-0000-000000000000", headers=auth_headers)
+        assert resp.status_code == 404
+
+
+class TestSettings:
+    async def test_get_settings(self, client, auth_headers, seed_tenant):
+        resp = await client.get("/api/v1/settings/", headers=auth_headers)
+        assert resp.status_code == 200
+        data = resp.json()
+        assert "weight_identity" in data
+        assert data["weight_identity"] == 0.25
+
+    async def test_update_settings(self, client, auth_headers, seed_tenant):
+        resp = await client.put("/api/v1/settings/", json={"weight_identity": 0.5}, headers=auth_headers)
+        assert resp.status_code == 200
+        data = resp.json()
+        assert data["weight_identity"] == 0.5
+
+
+class TestAlertsManagement:
+    async def test_get_alert_not_found(self, client, auth_headers):
+        resp = await client.get("/api/v1/alerts/00000000-0000-0000-0000-000000000000", headers=auth_headers)
+        assert resp.status_code == 404
+
+    async def test_acknowledge_not_found(self, client, auth_headers):
+        resp = await client.put("/api/v1/alerts/00000000-0000-0000-0000-000000000000/acknowledge", headers=auth_headers)
+        assert resp.status_code == 404
+
+    async def test_resolve_not_found(self, client, auth_headers):
+        resp = await client.put("/api/v1/alerts/00000000-0000-0000-0000-000000000000/resolve", json={"status": "resolved"}, headers=auth_headers)
+        assert resp.status_code == 404
+
+
+class TestApiKeys:
+    async def test_list_api_keys(self, client, auth_headers):
+        resp = await client.get("/api/v1/api-keys/", headers=auth_headers)
+        assert resp.status_code == 200
+        assert resp.json() == []
+
+    async def test_create_api_key(self, client, auth_headers):
+        resp = await client.post("/api/v1/api-keys/", json={"name": "test-key"}, headers=auth_headers)
+        assert resp.status_code == 201
+        data = resp.json()
+        assert "raw_key" in data
+        assert data["name"] == "test-key"
+
+
+class TestReports:
+    async def test_export_json(self, client, auth_headers):
+        resp = await client.get("/api/v1/reports/events/json?hours=24", headers=auth_headers)
+        assert resp.status_code == 200
+
+    async def test_export_csv(self, client, auth_headers):
+        resp = await client.get("/api/v1/reports/events/csv?hours=24", headers=auth_headers)
+        assert resp.status_code == 200

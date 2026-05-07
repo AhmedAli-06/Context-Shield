@@ -1,29 +1,33 @@
-import asyncio
+import uuid
 import pytest
 from httpx import AsyncClient, ASGITransport
+from sqlalchemy import JSON
 from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, AsyncSession
+from sqlalchemy.dialects.postgresql import JSONB
+from sqlalchemy.ext.compiler import compiles
 from app.database import Base, get_db
 from app.main import app
-from app.config import get_settings
 from app.security import hash_password, create_access_token
 from app.models.auth import AuthUser, Role, UserRole
 from app.models.tenant import Tenant, TenantConfig
 
+# Make JSONB work with SQLite for testing
+@compiles(JSONB)
+def compile_jsonb_sqlite(type_, compiler, **kw):
+    return compiler.visit_JSON(type_, **kw)
+
 TEST_DB_URL = "sqlite+aiosqlite:///:memory:"
+TENANT_ID = uuid.UUID("a1b2c3d4-e5f6-7890-abcd-ef1234567890")
 
-@pytest.fixture(scope="session")
-def event_loop():
-    loop = asyncio.new_event_loop()
-    yield loop
-    loop.close()
 
-@pytest.fixture(scope="session")
+@pytest.fixture
 async def engine():
     engine = create_async_engine(TEST_DB_URL, echo=False)
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
     yield engine
     await engine.dispose()
+
 
 @pytest.fixture
 async def db_session(engine):
@@ -32,6 +36,7 @@ async def db_session(engine):
         yield session
     finally:
         await session.close()
+
 
 @pytest.fixture
 async def client(db_session):
@@ -42,6 +47,7 @@ async def client(db_session):
     async with AsyncClient(transport=transport, base_url="http://test") as ac:
         yield ac
     app.dependency_overrides.clear()
+
 
 @pytest.fixture
 async def seed_tenant(db_session):
@@ -55,6 +61,7 @@ async def seed_tenant(db_session):
     await db_session.commit()
     return tenant
 
+
 @pytest.fixture
 async def seed_roles(db_session, seed_tenant):
     roles = {}
@@ -64,6 +71,7 @@ async def seed_roles(db_session, seed_tenant):
         roles[rname] = r
     await db_session.commit()
     return roles
+
 
 @pytest.fixture
 async def admin_user(db_session, seed_tenant, seed_roles):
@@ -78,6 +86,7 @@ async def admin_user(db_session, seed_tenant, seed_roles):
     await db_session.commit()
     return user
 
+
 @pytest.fixture
 async def viewer_user(db_session, seed_tenant, seed_roles):
     user = AuthUser(
@@ -91,16 +100,17 @@ async def viewer_user(db_session, seed_tenant, seed_roles):
     await db_session.commit()
     return user
 
+
 @pytest.fixture
 async def admin_token(admin_user):
     return create_access_token({"sub": str(admin_user.id), "tenant_id": str(admin_user.tenant_id)})
+
 
 @pytest.fixture
 async def viewer_token(viewer_user):
     return create_access_token({"sub": str(viewer_user.id), "tenant_id": str(viewer_user.tenant_id)})
 
+
 @pytest.fixture
 async def auth_headers(admin_token):
     return {"Authorization": f"Bearer {admin_token}"}
-
-TENANT_ID = "a1b2c3d4-e5f6-7890-abcd-ef1234567890"

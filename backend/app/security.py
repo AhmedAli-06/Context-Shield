@@ -58,3 +58,24 @@ async def require_superuser(current_user: AuthUser = Depends(get_current_user)) 
     if not current_user.is_superuser:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Superuser required")
     return current_user
+
+
+def require_role(role_name: str):
+    def role_checker(current_user: AuthUser = Depends(get_current_user)) -> AuthUser:
+        if current_user.is_superuser:
+            return current_user
+        user_roles = [ur.role.name for ur in current_user.roles] if current_user.roles else []
+        if role_name not in user_roles:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail=f"Role '{role_name}' required",
+            )
+        return current_user
+    return role_checker
+
+
+def has_role(current_user: AuthUser, role_name: str) -> bool:
+    if current_user.is_superuser:
+        return True
+    user_roles = [ur.role.name for ur in current_user.roles] if current_user.roles else []
+    return role_name in user_roles
