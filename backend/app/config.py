@@ -23,6 +23,9 @@ class Settings(BaseSettings):
     # CORS
     CORS_ORIGINS: list[str] = ["http://localhost:5173", "http://localhost:3000"]
 
+    # Audit
+    HMAC_SECRET: str = "contextshield-hmac-secret-change-in-production"
+
     class Config:
         env_file = ".env"
         case_sensitive = True

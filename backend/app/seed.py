@@ -139,9 +139,9 @@ async def seed():
         now = datetime.now(timezone.utc)
         events_created = 0
 
-        for day_offset in range(7, 0, -1):
+        for day_offset in range(7, -1, -1):
             base_time = now - timedelta(days=day_offset)
-            num_events = random.randint(30, 60)
+            num_events = random.randint(40, 80) if day_offset == 0 else random.randint(30, 60)
 
             for _ in range(num_events):
                 user = random.choice(users)

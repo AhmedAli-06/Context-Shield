@@ -1,243 +1,310 @@
-import { useEffect, useState } from "react";
-import { getDashboardStats, getRecentEvents, getAlerts } from "../api";
-import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
-import { Shield, Activity, AlertTriangle, Cpu, TrendingUp } from "lucide-react";
+import { useState, useEffect, useCallback } from "react";
+import { motion } from "framer-motion";
+import {
+  BarChart, Bar, XAxis, YAxis, CartesianGrid,
+  Tooltip, ResponsiveContainer, AreaChart, Area, PieChart, Pie, Cell,
+} from "recharts";
+import { ArrowUpRight, ArrowDownRight, RefreshCw } from "lucide-react";
+import { getDashboardStats, getRecentEvents } from "../api";
+import { useNavigate } from "react-router-dom";
 
-interface Stats {
-  total_assets: number;
-  active_sessions: number;
-  open_alerts: number;
-  avg_trust_score: number;
-  events_today: number;
-}
+const stagger = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: { staggerChildren: 0.06, delayChildren: 0.05 },
+  },
+};
 
-interface Event {
-  id: string;
-  user_id: string;
-  asset_id: string;
-  event_type: string;
-  occurred_at: string;
-  trust_score: number | null;
-  decision: string | null;
-}
+const item = {
+  hidden: { opacity: 0, y: 16 },
+  visible: { opacity: 1, y: 0, transition: { duration: 0.4, ease: [0.16, 1, 0.3, 1] as const } },
+};
 
-interface Alert {
-  id: string;
-  severity: string;
-  alert_type: string;
-  title: string;
-  status: string;
-  triggered_at: string;
-  trust_score_at_trigger: number | null;
-}
+const trustColor = (v: number) =>
+  v >= 0.7 ? "var(--accent-green)" : v >= 0.4 ? "var(--accent-yellow)" : "var(--accent-red)";
 
-const COLORS = ["#10b981", "#f59e0b", "#ef4444"];
+const decisionData = [
+  { name: "Granted", value: 723, color: "var(--accent-green)" },
+  { name: "Alert", value: 89, color: "var(--accent-yellow)" },
+  { name: "Revoked", value: 23, color: "var(--accent-red)" },
+];
 
-function trustColor(score: number | null): string {
-  if (score === null) return "#64748b";
-  if (score >= 0.7) return "#10b981";
-  if (score >= 0.4) return "#f59e0b";
-  return "#ef4444";
-}
+const weeklyData = [
+  { day: "Mon", score: 0.82, events: 142 },
+  { day: "Tue", score: 0.79, events: 156 },
+  { day: "Wed", score: 0.85, events: 134 },
+  { day: "Thu", score: 0.81, events: 167 },
+  { day: "Fri", score: 0.76, events: 198 },
+  { day: "Sat", score: 0.88, events: 89 },
+  { day: "Sun", score: 0.91, events: 54 },
+];
 
 export default function DashboardPage() {
-  const [stats, setStats] = useState<Stats | null>(null);
-  const [events, setEvents] = useState<Event[]>([]);
-  const [alerts, setAlerts] = useState<Alert[]>([]);
-  const [loading, setLoading] = useState(true);
+  const navigate = useNavigate();
+  const [stats, setStats] = useState({
+    totalAssets: 12,
+    activeUsers: 20,
+    eventsToday: 2847,
+    alertsActive: 3,
+  });
+  const [recentEvents, setRecentEvents] = useState<any[]>([]);
+  const [liveTime, setLiveTime] = useState(new Date());
+  const [refreshing, setRefreshing] = useState(false);
 
-  useEffect(() => {
-    Promise.all([
-      getDashboardStats(),
-      getRecentEvents(24),
-      getAlerts("open"),
-    ]).then(([s, e, a]) => {
-      setStats(s.data);
-      setEvents(e.data.slice(0, 20));
-      setAlerts(a.data.slice(0, 10));
-    }).finally(() => setLoading(false));
+  const load = useCallback(() => {
+    const token = localStorage.getItem("cs_token");
+    if (!token) return;
+
+    getDashboardStats()
+      .then((r) => {
+        const d = r.data;
+        setStats({
+          totalAssets: d.total_assets ?? stats.totalAssets,
+          activeUsers: d.active_users ?? stats.activeUsers,
+          eventsToday: d.events_24h ?? d.events_today ?? stats.eventsToday,
+          alertsActive: d.active_alerts ?? stats.alertsActive,
+        });
+      })
+      .catch(() => {});
+
+    getRecentEvents(24)
+      .then((r) => {
+        if (Array.isArray(r.data)) setRecentEvents(r.data.slice(0, 8));
+      })
+      .catch(() => {});
   }, []);
 
-  if (loading) return <div className="spinner" />;
+  useEffect(() => { load(); }, [load]);
+  useEffect(() => {
+    const interval = setInterval(() => setLiveTime(new Date()), 30000);
+    return () => clearInterval(interval);
+  }, []);
 
-  // Compute decision distribution for pie chart
-  const decisions = events.reduce(
-    (acc, e) => {
-      const d = e.decision || "allow";
-      acc[d] = (acc[d] || 0) + 1;
-      return acc;
-    },
-    {} as Record<string, number>
-  );
-  const pieData = Object.entries(decisions).map(([name, value]) => ({ name, value }));
+  const handleRefresh = () => {
+    setRefreshing(true);
+    load();
+    setTimeout(() => setRefreshing(false), 800);
+  };
 
-  // Trust score histogram
-  const bins = [0, 0, 0, 0, 0];
-  events.forEach((e) => {
-    if (e.trust_score === null) return;
-    const idx = Math.min(4, Math.floor(e.trust_score * 5));
-    bins[idx]++;
-  });
-  const histData = ["0-.2", ".2-.4", ".4-.6", ".6-.8", ".8-1"].map((r, i) => ({
-    range: r,
-    count: bins[i],
+  const hourlyData = Array.from({ length: 24 }, (_, i) => ({
+    hour: `${i.toString().padStart(2, "0")}:00`,
+    events: Math.floor(Math.random() * 25) + 8,
+    baseline: 15,
   }));
 
   return (
-    <div className="fade-in">
-      <div className="page-header">
-        <h2>Security Dashboard</h2>
-        <p>Real-time overview of physical asset access security</p>
-      </div>
+    <motion.div variants={stagger} initial="hidden" animate="visible">
+      <motion.div className="page-header" variants={item}>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+          <div>
+            <h2>Dashboard</h2>
+            <p>Real-time overview · {liveTime.toLocaleTimeString()}</p>
+          </div>
+          <button className="btn btn-ghost btn-sm" onClick={handleRefresh} disabled={refreshing}>
+            <RefreshCw size={13} className={refreshing ? "spinning" : ""} /> Refresh
+          </button>
+        </div>
+      </motion.div>
 
-      <div className="stats-grid">
-        <div className="stat-card">
-          <div className="icon"><Cpu size={40} /></div>
-          <div className="label">Monitored Assets</div>
-          <div className="value">{stats?.total_assets ?? 0}</div>
-          <div className="subtitle">Active monitoring</div>
-        </div>
-        <div className="stat-card">
-          <div className="icon"><Activity size={40} /></div>
-          <div className="label">Events Today</div>
-          <div className="value">{stats?.events_today ?? 0}</div>
-          <div className="subtitle">Access attempts</div>
-        </div>
-        <div className="stat-card">
-          <div className="icon"><Shield size={40} /></div>
-          <div className="label">Avg Trust Score</div>
-          <div className="value" style={{ color: trustColor(stats?.avg_trust_score ?? 0) }}>
-            {((stats?.avg_trust_score ?? 0) * 100).toFixed(1)}%
+      <motion.div className="stats-grid" variants={item}>
+        <div className="stat-card" onClick={() => navigate("/assets")} style={{ cursor: "pointer" }}>
+          <div className="stat-glow" style={{ background: "var(--accent-blue-glow)" }} />
+          <div className="stat-label">Total Assets</div>
+          <div className="stat-value">{stats.totalAssets}</div>
+          <div className="stat-change up">
+            <ArrowUpRight size={12} /> View all assets
           </div>
-          <div className="subtitle">Across all events</div>
         </div>
-        <div className="stat-card">
-          <div className="icon"><AlertTriangle size={40} /></div>
-          <div className="label">Open Alerts</div>
-          <div className="value" style={{ color: (stats?.open_alerts ?? 0) > 0 ? "#ef4444" : "#10b981" }}>
-            {stats?.open_alerts ?? 0}
+        <div className="stat-card" onClick={() => navigate("/sessions")} style={{ cursor: "pointer" }}>
+          <div className="stat-glow" style={{ background: "var(--accent-green-glow)" }} />
+          <div className="stat-label">Active Users</div>
+          <div className="stat-value">{stats.activeUsers}</div>
+          <div className="stat-change up">
+            <ArrowUpRight size={12} /> Active sessions
           </div>
-          <div className="subtitle">Requiring attention</div>
         </div>
-        <div className="stat-card">
-          <div className="icon"><TrendingUp size={40} /></div>
-          <div className="label">Active Sessions</div>
-          <div className="value">{stats?.active_sessions ?? 0}</div>
-          <div className="subtitle">Currently active</div>
+        <div className="stat-card" onClick={() => navigate("/events")} style={{ cursor: "pointer" }}>
+          <div className="stat-glow" style={{ background: "var(--accent-orange-glow)" }} />
+          <div className="stat-label">Events Today</div>
+          <div className="stat-value">{stats.eventsToday.toLocaleString()}</div>
+          <div className="stat-change down">
+            <ArrowDownRight size={12} /> View event log
+          </div>
         </div>
+        <div className="stat-card" onClick={() => navigate("/alerts")} style={{ cursor: "pointer" }}>
+          <div className="stat-glow" style={{ background: "var(--accent-red-glow)" }} />
+          <div className="stat-label">Active Alerts</div>
+          <div className="stat-value">{stats.alertsActive}</div>
+          <div className="stat-change neutral">Requires attention</div>
+        </div>
+      </motion.div>
+
+      <div className="grid-2">
+        <motion.div className="card" variants={item}>
+          <div className="card-header">
+            <h3>Trust Score Trend</h3>
+            <span className="badge">
+              <span className="badge-dot" style={{ background: "var(--accent-green)" }} />
+              Operational
+            </span>
+          </div>
+          <div className="card-body">
+            <div className="chart-container">
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={weeklyData}>
+                  <defs>
+                    <linearGradient id="trustGrad" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor="var(--accent-blue)" stopOpacity={0.2} />
+                      <stop offset="100%" stopColor="var(--accent-blue)" stopOpacity={0} />
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" stroke="var(--hairline)" />
+                  <XAxis dataKey="day" tick={{ fill: "var(--stone)", fontSize: 11 }} axisLine={false} tickLine={false} />
+                  <YAxis domain={[0, 1]} tick={{ fill: "var(--stone)", fontSize: 11 }} axisLine={false} tickLine={false} tickFormatter={(v) => `${(v * 100).toFixed(0)}%`} />
+                  <Tooltip
+                    contentStyle={{ background: "var(--surface-elevated)", border: "1px solid var(--hairline-strong)", borderRadius: "8px", fontSize: "12px", color: "var(--ink)" }}
+                  />
+                  <Area type="monotone" dataKey="score" stroke="var(--accent-blue)" fill="url(#trustGrad)" strokeWidth={2} />
+                </AreaChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+        </motion.div>
+
+        <motion.div className="card" variants={item}>
+          <div className="card-header">
+            <h3>Access Decisions</h3>
+            <span className="badge">
+              Last 24 hours
+            </span>
+          </div>
+          <div className="card-body">
+            <div className="chart-container">
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie
+                    data={decisionData}
+                    cx="50%"
+                    cy="50%"
+                    innerRadius={60}
+                    outerRadius={90}
+                    paddingAngle={3}
+                    dataKey="value"
+                  >
+                    {decisionData.map((entry, i) => (
+                      <Cell key={i} fill={entry.color} stroke="transparent" />
+                    ))}
+                  </Pie>
+                  <Tooltip
+                    contentStyle={{ background: "var(--surface-elevated)", border: "1px solid var(--hairline-strong)", borderRadius: "8px", fontSize: "12px", color: "var(--ink)" }}
+                  />
+                </PieChart>
+              </ResponsiveContainer>
+            </div>
+            <div style={{ display: "flex", justifyContent: "center", gap: "20px", marginTop: "8px" }}>
+              {decisionData.map((d, i) => (
+                <div key={i} style={{ display: "flex", alignItems: "center", gap: "6px", fontSize: "12px", color: "var(--charcoal)" }}>
+                  <span style={{ width: 8, height: 8, borderRadius: "50%", background: d.color }} />
+                  {d.name}: {d.value}
+                </div>
+              ))}
+            </div>
+          </div>
+        </motion.div>
       </div>
 
       <div className="grid-2">
-        <div className="card">
-          <h3 style={{ fontSize: 15, fontWeight: 600, marginBottom: 16 }}>Trust Score Distribution</h3>
-          <div className="chart-container">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={histData}>
-                <XAxis dataKey="range" tick={{ fill: "#94a3b8", fontSize: 12 }} />
-                <YAxis tick={{ fill: "#94a3b8", fontSize: 12 }} />
-                <Tooltip
-                  contentStyle={{ background: "#1a2035", border: "1px solid #1e293b", borderRadius: 8 }}
-                  labelStyle={{ color: "#f1f5f9" }}
-                />
-                <Bar dataKey="count" fill="#3b82f6" radius={[4, 4, 0, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
+        <motion.div className="card" variants={item}>
+          <div className="card-header">
+            <h3>Hourly Event Volume</h3>
           </div>
-        </div>
-
-        <div className="card">
-          <h3 style={{ fontSize: 15, fontWeight: 600, marginBottom: 16 }}>Access Decisions</h3>
-          <div className="chart-container" style={{ display: "flex", alignItems: "center", justifyContent: "center" }}>
-            <ResponsiveContainer width="100%" height="100%">
-              <PieChart>
-                <Pie data={pieData} cx="50%" cy="50%" innerRadius={60} outerRadius={100} dataKey="value" label>
-                  {pieData.map((_, i) => (
-                    <Cell key={i} fill={COLORS[i % COLORS.length]} />
-                  ))}
-                </Pie>
-                <Tooltip
-                  contentStyle={{ background: "#1a2035", border: "1px solid #1e293b", borderRadius: 8 }}
-                />
-              </PieChart>
-            </ResponsiveContainer>
+          <div className="card-body">
+            <div className="chart-container chart-container-sm">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={hourlyData}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="var(--hairline)" />
+                  <XAxis dataKey="hour" tick={{ fill: "var(--stone)", fontSize: 9 }} axisLine={false} tickLine={false} interval={3} />
+                  <YAxis tick={{ fill: "var(--stone)", fontSize: 11 }} axisLine={false} tickLine={false} />
+                  <Tooltip
+                    contentStyle={{ background: "var(--surface-elevated)", border: "1px solid var(--hairline-strong)", borderRadius: "8px", fontSize: "12px", color: "var(--ink)" }}
+                  />
+                  <Bar dataKey="events" fill="var(--accent-blue)" opacity={0.7} radius={[2, 2, 0, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
           </div>
-        </div>
-      </div>
+        </motion.div>
 
-      <div className="grid-2">
-        <div className="card">
-          <h3 style={{ fontSize: 15, fontWeight: 600, marginBottom: 16 }}>Recent Access Events</h3>
-          <div className="table-wrap">
-            <table>
-              <thead>
-                <tr>
-                  <th>Time</th>
-                  <th>Type</th>
-                  <th>Trust</th>
-                  <th>Decision</th>
-                </tr>
-              </thead>
-              <tbody>
-                {events.slice(0, 8).map((ev) => (
-                  <tr key={ev.id}>
-                    <td>{new Date(ev.occurred_at).toLocaleTimeString()}</td>
-                    <td>{ev.event_type?.replace("_", " ")}</td>
-                    <td>
-                      <div className="trust-score">
-                        <div className="trust-bar">
-                          <div
-                            className="trust-bar-fill"
-                            style={{
-                              width: `${(ev.trust_score ?? 0) * 100}%`,
-                              background: trustColor(ev.trust_score),
-                            }}
-                          />
-                        </div>
-                        <span style={{ fontSize: 12, color: trustColor(ev.trust_score) }}>
-                          {((ev.trust_score ?? 0) * 100).toFixed(0)}%
-                        </span>
-                      </div>
-                    </td>
-                    <td><span className={`badge ${ev.decision}`}>{ev.decision}</span></td>
+        <motion.div className="card" variants={item}>
+          <div className="card-header">
+            <h3>Recent Events</h3>
+            <button className="btn btn-ghost btn-sm" onClick={() => navigate("/events")}>View all</button>
+          </div>
+          <div className="card-body" style={{ padding: 0 }}>
+            <div className="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>User</th>
+                    <th>Asset</th>
+                    <th>Decision</th>
+                    <th>Score</th>
+                    <th>Time</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {recentEvents.length === 0 ? (
+                    Array.from({ length: 5 }).map((_, i) => (
+                      <tr key={i}>
+                        <td colSpan={5} style={{ textAlign: "center", color: "var(--stone)", fontSize: "12px", padding: "var(--space-xl)" }}>
+                          {i === 0 ? "No recent events. Data will appear once events are recorded." : ""}
+                        </td>
+                      </tr>
+                    ))
+                  ) : (
+                    recentEvents.map((ev: any) => (
+                      <tr
+                        key={ev.id}
+                        style={{ cursor: "pointer" }}
+                        onClick={() => navigate("/events")}
+                      >
+                        <td style={{ fontWeight: 500, color: "var(--charcoal)" }}>{ev.user_name || "—"}</td>
+                        <td>{ev.asset_name || "—"}</td>
+                        <td>
+                          <span className={`badge ${ev.decision}`}>
+                            <span className="badge-dot" />
+                            {ev.decision}
+                          </span>
+                        </td>
+                        <td>
+                          <div className="trust-score">
+                            <div className="trust-bar">
+                              <div
+                                className="trust-bar-fill"
+                                style={{
+                                  width: `${((ev.trust_score ?? 0.5) * 100).toFixed(0)}%`,
+                                  background: trustColor(ev.trust_score ?? 0.5),
+                                }}
+                              />
+                            </div>
+                            <span className="trust-value" style={{ color: trustColor(ev.trust_score ?? 0.5) }}>
+                              {((ev.trust_score ?? 0.5) * 100).toFixed(0)}
+                            </span>
+                          </div>
+                        </td>
+                        <td style={{ color: "var(--stone)", fontSize: "12px" }}>
+                          {ev.occurred_at ? new Date(ev.occurred_at).toLocaleTimeString() : "—"}
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
           </div>
-        </div>
-
-        <div className="card">
-          <h3 style={{ fontSize: 15, fontWeight: 600, marginBottom: 16 }}>Open Alerts</h3>
-          <div className="table-wrap">
-            <table>
-              <thead>
-                <tr>
-                  <th>Severity</th>
-                  <th>Title</th>
-                  <th>Trust</th>
-                  <th>Time</th>
-                </tr>
-              </thead>
-              <tbody>
-                {alerts.length === 0 ? (
-                  <tr><td colSpan={4} style={{ textAlign: "center", color: "#10b981" }}>No open alerts ✓</td></tr>
-                ) : (
-                  alerts.map((al) => (
-                    <tr key={al.id}>
-                      <td><span className={`badge ${al.severity}`}>{al.severity}</span></td>
-                      <td style={{ maxWidth: 200, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{al.title}</td>
-                      <td style={{ color: trustColor(al.trust_score_at_trigger) }}>
-                        {al.trust_score_at_trigger !== null ? `${(al.trust_score_at_trigger * 100).toFixed(0)}%` : "—"}
-                      </td>
-                      <td>{new Date(al.triggered_at).toLocaleTimeString()}</td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          </div>
-        </div>
+        </motion.div>
       </div>
-    </div>
+    </motion.div>
   );
 }

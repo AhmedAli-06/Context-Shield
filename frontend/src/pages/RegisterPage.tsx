@@ -1,8 +1,9 @@
 import { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
-import { Lock, ArrowRight, Loader2, UserPlus } from "lucide-react";
+import { Lock, ArrowRight, Loader2 } from "lucide-react";
 import { motion } from "framer-motion";
+import toast from "react-hot-toast";
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -17,12 +18,14 @@ const itemVariants = {
   visible: { opacity: 1, y: 0, transition: { duration: 0.5, ease: [0.16, 1, 0.3, 1] as const } },
 };
 
-export default function LoginPage() {
+export default function RegisterPage() {
+  const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
-  const { login, user } = useAuth();
+  const { register, user } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -32,12 +35,25 @@ export default function LoginPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
+
+    if (password !== confirmPassword) {
+      setError("Passwords do not match.");
+      return;
+    }
+    if (password.length < 8) {
+      setError("Password must be at least 8 characters.");
+      return;
+    }
+
     setLoading(true);
     try {
-      await login(email, password);
+      await register(email, password, name);
+      toast.success("Account created successfully!");
       navigate("/", { replace: true });
-    } catch {
-      setError("Invalid credentials. Try again.");
+    } catch (err: any) {
+      const msg = err?.response?.data?.detail || err?.message || "Registration failed. Try again.";
+      setError(msg);
+      toast.error(msg);
     } finally {
       setLoading(false);
     }
@@ -46,7 +62,6 @@ export default function LoginPage() {
   return (
     <div className="login-root">
       <div className="login-bg-glow" />
-
       <nav className="login-nav">
         <div className="logo">
           <div className="logo-mark">CS</div>
@@ -64,31 +79,41 @@ export default function LoginPage() {
           <div className="login-hero">
             <motion.div className="badge-pill" variants={itemVariants}>
               <span className="pill-dot" />
-              Security Platform v0.2
+              Register — v0.2
             </motion.div>
-
             <motion.h1 variants={itemVariants}>
-              Intent-Aware<br />
-              <em>Asset Security</em>
+              Create Your<br />
+              <em>Security Account</em>
             </motion.h1>
-
             <motion.p variants={itemVariants}>
-              Real-time trust scoring, anomaly detection, and context-aware
-              access control for physical security operations.
+              Join ContextShield to monitor, analyze, and protect
+              your physical assets with AI-powered intent verification.
             </motion.p>
           </div>
 
           <motion.div className="login-card" variants={itemVariants}>
             <div className="login-card-inner">
-              <h3>Sign in</h3>
+              <h3>Create account</h3>
 
               <form onSubmit={handleSubmit}>
+                <div className="form-group">
+                  <label>Full name</label>
+                  <input
+                    className="form-input"
+                    type="text"
+                    placeholder="John Doe"
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    required
+                  />
+                </div>
+
                 <div className="form-group">
                   <label>Email</label>
                   <input
                     className="form-input"
                     type="email"
-                    placeholder="admin@company.com"
+                    placeholder="you@company.com"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     required
@@ -100,9 +125,22 @@ export default function LoginPage() {
                   <input
                     className="form-input"
                     type="password"
-                    placeholder="Enter your password"
+                    placeholder="Min. 8 characters"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
+                    required
+                    minLength={8}
+                  />
+                </div>
+
+                <div className="form-group">
+                  <label>Confirm password</label>
+                  <input
+                    className="form-input"
+                    type="password"
+                    placeholder="Repeat your password"
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
                     required
                   />
                 </div>
@@ -123,29 +161,22 @@ export default function LoginPage() {
                       <Loader2 size={14} className="spinning" />
                     ) : (
                       <>
-                        Continue <ArrowRight size={14} />
+                        Create account <ArrowRight size={14} />
                       </>
                     )}
                   </button>
                 </div>
               </form>
 
-              <div className="form-divider">new here?</div>
+              <div className="form-divider">already registered?</div>
 
-              <Link to="/register" className="btn btn-ghost" style={{ width: "100%", textDecoration: "none", justifyContent: "center" }}>
-                <UserPlus size={14} /> Create account
+              <Link to="/login" className="btn btn-ghost" style={{ width: "100%", textDecoration: "none", justifyContent: "center" }}>
+                Sign in instead
               </Link>
-
-              <div className="form-divider">demo credentials</div>
-
-              <div className="login-demo-cred">
-                Email: <code>admin@meridian-mfg.com</code><br />
-                Pass: <code>ContextShield2025!</code>
-              </div>
 
               <div className="login-security-note">
                 <Lock size={12} />
-                Secured with JWT + Supabase
+                Secured with Supabase + JWT
               </div>
             </div>
           </motion.div>

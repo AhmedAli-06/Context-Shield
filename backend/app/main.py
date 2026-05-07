@@ -13,6 +13,7 @@ from app.routers.settings import router as settings_router
 from app.routers.api_keys import router as api_keys_router
 from app.routers.reports import router as reports_router
 from app.routers.audit import router as audit_router
+from app.routers.ws import router as ws_router
 from app.middleware.audit import AuditMiddleware
 
 @asynccontextmanager
@@ -50,6 +51,7 @@ app.include_router(settings_router)
 app.include_router(api_keys_router)
 app.include_router(reports_router)
 app.include_router(audit_router)
+app.include_router(ws_router)
 
 @app.get("/health")
 async def health():

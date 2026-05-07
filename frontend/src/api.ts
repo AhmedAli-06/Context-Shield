@@ -31,6 +31,9 @@ export const login = (username: string, password: string) =>
     headers: { "Content-Type": "application/x-www-form-urlencoded" },
   });
 
+export const register = (data: { email: string; password: string; full_name: string; tenant_id?: string }) =>
+  api.post("/auth/register", data);
+
 export const getMe = () => api.get("/auth/me");
 
 // Dashboard
@@ -69,6 +72,16 @@ export const getApiKeys = () => api.get("/api-keys/");
 export const createApiKey = (name: string, scopes?: string) =>
   api.post("/api-keys/", { name, scopes: scopes || null });
 export const deleteApiKey = (id: string) => api.delete(`/api-keys/${id}`);
+
+// Alerts - detail
+export const getAlert = (id: string) => api.get(`/alerts/${id}`);
+
+// Sessions
+export const getSession = (id: string) => api.get(`/sessions/${id}`);
+
+// Audit
+export const getAuditLogs = (skip = 0, limit = 50) =>
+  api.get(`/audit/logs?skip=${skip}&limit=${limit}`);
 
 // Reports
 export const exportEventsCsv = (hours = 24) =>

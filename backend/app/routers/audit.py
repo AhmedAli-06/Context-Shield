@@ -1,4 +1,6 @@
+from uuid import UUID
 from fastapi import APIRouter, Depends, HTTPException
+from pydantic import BaseModel
 from sqlalchemy import select, desc
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.database import get_db
@@ -6,9 +8,14 @@ from app.security import get_current_user
 from app.models.auth import AuthUser
 from app.models.audit import AuditLog
 from app.schemas import AuditLogResponse
-from app.middleware.audit import sign_audit_entry, verify_audit_entry
+from app.middleware.audit import verify_audit_entry
 
 router = APIRouter(prefix="/api/v1/audit", tags=["Audit"])
+
+
+class VerifyAuditRequest(BaseModel):
+    log_id: UUID
+    signature: str
 
 
 @router.get("/logs", response_model=list[AuditLogResponse])
@@ -27,11 +34,38 @@ async def list_audit_logs(
 
 
 @router.post("/verify")
-async def verify_audit_entry_endpoint(log_id: str, signature: str):
+async def verify_audit_entry_endpoint(
+    body: VerifyAuditRequest,
+    current_user: AuthUser = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    log = await db.get(AuditLog, body.log_id)
+    if log is None:
+        raise HTTPException(status_code=404, detail="Audit log not found")
+    if log.tenant_id != current_user.tenant_id:
+        raise HTTPException(status_code=403, detail="Access denied")
+
     try:
-        entry_data = {"log_id": log_id, "verified": True}
-        computed = sign_audit_entry(entry_data)
-        is_valid = verify_audit_entry(entry_data, signature)
-        return {"valid": is_valid, "computed_signature": computed if not is_valid else None}
+        details = dict(log.details or {})
+        stored_hmac = details.pop("_hmac", None)
+        if stored_hmac is None:
+            raise HTTPException(status_code=400, detail="Log has no integrity signature")
+
+        signed = {
+            "id": str(log.id),
+            "tenant_id": str(log.tenant_id),
+            "auth_user_id": str(log.auth_user_id) if log.auth_user_id else None,
+            "action": log.action,
+            "resource_type": log.resource_type,
+            "resource_id": log.resource_id,
+            "ip_address": log.ip_address,
+            "user_agent": log.user_agent,
+            "details": details,
+        }
+
+        is_valid = verify_audit_entry(signed, body.signature)
+        return {"valid": is_valid}
+    except HTTPException:
+        raise
     except Exception:
         raise HTTPException(status_code=400, detail="Verification failed")
