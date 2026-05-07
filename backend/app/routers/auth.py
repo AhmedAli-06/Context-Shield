@@ -1,0 +1,73 @@
+from datetime import datetime, timezone
+from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi.security import OAuth2PasswordRequestForm
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
+from app.database import get_db
+from app.models.auth import AuthUser
+from app.schemas import TokenResponse, RegisterRequest, AuthUserResponse
+from app.security import hash_password, verify_password, create_access_token, get_current_user
+from app.config import get_settings
+
+settings = get_settings()
+router = APIRouter(prefix="/api/v1/auth", tags=["Authentication"])
+
+
+@router.post("/login", response_model=TokenResponse)
+async def login(form: OAuth2PasswordRequestForm = Depends(), db: AsyncSession = Depends(get_db)):
+    result = await db.execute(select(AuthUser).where(AuthUser.email == form.username))
+    user = result.scalar_one_or_none()
+    if not user or not verify_password(form.password, user.password_hash):
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid credentials")
+    if not user.is_active:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Account disabled")
+    if user.locked_until and user.locked_until > datetime.now(timezone.utc):
+        raise HTTPException(status_code=status.HTTP_423_LOCKED, detail="Account temporarily locked")
+
+    user.failed_login_count = 0
+    user.last_login_at = datetime.now(timezone.utc)
+    await db.commit()
+
+    token = create_access_token({"sub": str(user.id), "tenant_id": str(user.tenant_id)})
+    roles = [ur.role.name for ur in user.roles] if user.roles else []
+    return TokenResponse(
+        access_token=token,
+        expires_in=settings.JWT_ACCESS_TOKEN_EXPIRE_MINUTES * 60,
+        user=AuthUserResponse(
+            id=user.id, email=user.email, full_name=user.full_name,
+            tenant_id=user.tenant_id, is_active=user.is_active,
+            is_superuser=user.is_superuser, roles=roles,
+        ),
+    )
+
+
+@router.post("/register", response_model=AuthUserResponse, status_code=201)
+async def register(req: RegisterRequest, db: AsyncSession = Depends(get_db)):
+    existing = await db.execute(select(AuthUser).where(AuthUser.email == req.email))
+    if existing.scalar_one_or_none():
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Email already registered")
+
+    user = AuthUser(
+        email=req.email,
+        password_hash=hash_password(req.password),
+        full_name=req.full_name,
+        tenant_id=req.tenant_id,
+    )
+    db.add(user)
+    await db.commit()
+    await db.refresh(user)
+    return AuthUserResponse(
+        id=user.id, email=user.email, full_name=user.full_name,
+        tenant_id=user.tenant_id, is_active=user.is_active,
+        is_superuser=user.is_superuser, roles=[],
+    )
+
+
+@router.get("/me", response_model=AuthUserResponse)
+async def get_me(current_user: AuthUser = Depends(get_current_user)):
+    roles = [ur.role.name for ur in current_user.roles] if current_user.roles else []
+    return AuthUserResponse(
+        id=current_user.id, email=current_user.email, full_name=current_user.full_name,
+        tenant_id=current_user.tenant_id, is_active=current_user.is_active,
+        is_superuser=current_user.is_superuser, roles=roles,
+    )
