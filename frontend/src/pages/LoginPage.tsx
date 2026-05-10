@@ -1,8 +1,8 @@
-import { useState, useEffect } from "react";
-import { useNavigate, Link } from "react-router-dom";
-import { useAuth } from "../context/AuthContext";
-import { Lock, ArrowRight, Loader2, UserPlus } from "lucide-react";
-import { motion } from "framer-motion";
+import { useState, useEffect } from 'react'
+import { useNavigate, Link } from 'react-router-dom'
+import { useAuth } from '../context/AuthContext'
+import { Lock, ArrowRight, Loader2, UserPlus } from 'lucide-react'
+import { motion } from 'framer-motion'
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -10,38 +10,38 @@ const containerVariants = {
     opacity: 1,
     transition: { staggerChildren: 0.08, delayChildren: 0.1 },
   },
-};
+}
 
 const itemVariants = {
   hidden: { opacity: 0, y: 20 },
   visible: { opacity: 1, y: 0, transition: { duration: 0.5, ease: [0.16, 1, 0.3, 1] as const } },
-};
+}
 
 export default function LoginPage() {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
-  const [loading, setLoading] = useState(false);
-  const { login, user } = useAuth();
-  const navigate = useNavigate();
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [error, setError] = useState('')
+  const [loading, setLoading] = useState(false)
+  const { login, user } = useAuth()
+  const navigate = useNavigate()
 
   useEffect(() => {
-    if (user) navigate("/", { replace: true });
-  }, [user, navigate]);
+    if (user) navigate('/', { replace: true })
+  }, [user, navigate])
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError("");
-    setLoading(true);
+    e.preventDefault()
+    setError('')
+    setLoading(true)
     try {
-      await login(email, password);
-      navigate("/", { replace: true });
+      await login(email, password)
+      navigate('/', { replace: true })
     } catch {
-      setError("Invalid credentials. Try again.");
+      setError('Invalid credentials. Try again.')
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
-  };
+  }
 
   return (
     <div className="login-root">
@@ -68,13 +68,14 @@ export default function LoginPage() {
             </motion.div>
 
             <motion.h1 variants={itemVariants}>
-              Intent-Aware<br />
+              Intent-Aware
+              <br />
               <em>Asset Security</em>
             </motion.h1>
 
             <motion.p variants={itemVariants}>
-              Real-time trust scoring, anomaly detection, and context-aware
-              access control for physical security operations.
+              Real-time trust scoring, anomaly detection, and context-aware access control for
+              physical security operations.
             </motion.p>
           </div>
 
@@ -90,7 +91,7 @@ export default function LoginPage() {
                     type="email"
                     placeholder="admin@company.com"
                     value={email}
-                    onChange={(e) => setEmail(e.target.value)}
+                    onChange={e => setEmail(e.target.value)}
                     required
                   />
                 </div>
@@ -102,7 +103,7 @@ export default function LoginPage() {
                     type="password"
                     placeholder="Enter your password"
                     value={password}
-                    onChange={(e) => setPassword(e.target.value)}
+                    onChange={e => setPassword(e.target.value)}
                     required
                   />
                 </div>
@@ -132,14 +133,19 @@ export default function LoginPage() {
 
               <div className="form-divider">new here?</div>
 
-              <Link to="/register" className="btn btn-ghost" style={{ width: "100%", textDecoration: "none", justifyContent: "center" }}>
+              <Link
+                to="/register"
+                className="btn btn-ghost"
+                style={{ width: '100%', textDecoration: 'none', justifyContent: 'center' }}
+              >
                 <UserPlus size={14} /> Create account
               </Link>
 
               <div className="form-divider">demo credentials</div>
 
               <div className="login-demo-cred">
-                Email: <code>admin@meridian-mfg.com</code><br />
+                Email: <code>admin@meridian-mfg.com</code>
+                <br />
                 Pass: <code>ContextShield2025!</code>
               </div>
 
@@ -152,5 +158,5 @@ export default function LoginPage() {
         </motion.div>
       </div>
     </div>
-  );
+  )
 }

@@ -1,9 +1,9 @@
-import { useState, useEffect } from "react";
-import { useNavigate, Link } from "react-router-dom";
-import { useAuth } from "../context/AuthContext";
-import { Lock, ArrowRight, Loader2 } from "lucide-react";
-import { motion } from "framer-motion";
-import toast from "react-hot-toast";
+import { useState, useEffect } from 'react'
+import { useNavigate, Link } from 'react-router-dom'
+import { useAuth } from '../context/AuthContext'
+import { Lock, ArrowRight, Loader2 } from 'lucide-react'
+import { motion } from 'framer-motion'
+import toast from 'react-hot-toast'
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -11,53 +11,53 @@ const containerVariants = {
     opacity: 1,
     transition: { staggerChildren: 0.08, delayChildren: 0.1 },
   },
-};
+}
 
 const itemVariants = {
   hidden: { opacity: 0, y: 20 },
   visible: { opacity: 1, y: 0, transition: { duration: 0.5, ease: [0.16, 1, 0.3, 1] as const } },
-};
+}
 
 export default function RegisterPage() {
-  const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
-  const [error, setError] = useState("");
-  const [loading, setLoading] = useState(false);
-  const { register, user } = useAuth();
-  const navigate = useNavigate();
+  const [name, setName] = useState('')
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [confirmPassword, setConfirmPassword] = useState('')
+  const [error, setError] = useState('')
+  const [loading, setLoading] = useState(false)
+  const { register, user } = useAuth()
+  const navigate = useNavigate()
 
   useEffect(() => {
-    if (user) navigate("/", { replace: true });
-  }, [user, navigate]);
+    if (user) navigate('/', { replace: true })
+  }, [user, navigate])
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError("");
+    e.preventDefault()
+    setError('')
 
     if (password !== confirmPassword) {
-      setError("Passwords do not match.");
-      return;
+      setError('Passwords do not match.')
+      return
     }
     if (password.length < 8) {
-      setError("Password must be at least 8 characters.");
-      return;
+      setError('Password must be at least 8 characters.')
+      return
     }
 
-    setLoading(true);
+    setLoading(true)
     try {
-      await register(email, password, name);
-      toast.success("Account created successfully!");
-      navigate("/", { replace: true });
+      await register(email, password, name)
+      toast.success('Account created successfully!')
+      navigate('/', { replace: true })
     } catch (err: any) {
-      const msg = err?.response?.data?.detail || err?.message || "Registration failed. Try again.";
-      setError(msg);
-      toast.error(msg);
+      const msg = err?.response?.data?.detail || err?.message || 'Registration failed. Try again.'
+      setError(msg)
+      toast.error(msg)
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
-  };
+  }
 
   return (
     <div className="login-root">
@@ -82,12 +82,13 @@ export default function RegisterPage() {
               Register — v0.2
             </motion.div>
             <motion.h1 variants={itemVariants}>
-              Create Your<br />
+              Create Your
+              <br />
               <em>Security Account</em>
             </motion.h1>
             <motion.p variants={itemVariants}>
-              Join ContextShield to monitor, analyze, and protect
-              your physical assets with AI-powered intent verification.
+              Join ContextShield to monitor, analyze, and protect your physical assets with
+              AI-powered intent verification.
             </motion.p>
           </div>
 
@@ -103,7 +104,7 @@ export default function RegisterPage() {
                     type="text"
                     placeholder="John Doe"
                     value={name}
-                    onChange={(e) => setName(e.target.value)}
+                    onChange={e => setName(e.target.value)}
                     required
                   />
                 </div>
@@ -115,7 +116,7 @@ export default function RegisterPage() {
                     type="email"
                     placeholder="you@company.com"
                     value={email}
-                    onChange={(e) => setEmail(e.target.value)}
+                    onChange={e => setEmail(e.target.value)}
                     required
                   />
                 </div>
@@ -127,7 +128,7 @@ export default function RegisterPage() {
                     type="password"
                     placeholder="Min. 8 characters"
                     value={password}
-                    onChange={(e) => setPassword(e.target.value)}
+                    onChange={e => setPassword(e.target.value)}
                     required
                     minLength={8}
                   />
@@ -140,7 +141,7 @@ export default function RegisterPage() {
                     type="password"
                     placeholder="Repeat your password"
                     value={confirmPassword}
-                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    onChange={e => setConfirmPassword(e.target.value)}
                     required
                   />
                 </div>
@@ -170,7 +171,11 @@ export default function RegisterPage() {
 
               <div className="form-divider">already registered?</div>
 
-              <Link to="/login" className="btn btn-ghost" style={{ width: "100%", textDecoration: "none", justifyContent: "center" }}>
+              <Link
+                to="/login"
+                className="btn btn-ghost"
+                style={{ width: '100%', textDecoration: 'none', justifyContent: 'center' }}
+              >
                 Sign in instead
               </Link>
 
@@ -183,5 +188,5 @@ export default function RegisterPage() {
         </motion.div>
       </div>
     </div>
-  );
+  )
 }

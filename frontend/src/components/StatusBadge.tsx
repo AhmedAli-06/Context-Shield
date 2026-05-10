@@ -1,10 +1,7 @@
 export function StatusDot({ color }: { color: string }) {
   return (
-    <span
-      className="status-dot"
-      style={{ background: color, boxShadow: `0 0 6px ${color}40` }}
-    />
-  );
+    <span className="status-dot" style={{ background: color, boxShadow: `0 0 6px ${color}40` }} />
+  )
 }
 
 export function StatusBadge({ label, color }: { label: string; color: string }) {
@@ -13,5 +10,5 @@ export function StatusBadge({ label, color }: { label: string; color: string }) 
       <StatusDot color={color} />
       {label}
     </span>
-  );
+  )
 }
