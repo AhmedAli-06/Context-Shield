@@ -1,13 +1,13 @@
 from datetime import datetime
 from uuid import UUID
 
-from pydantic import BaseModel, ConfigDict, EmailStr
+from pydantic import BaseModel, ConfigDict, EmailStr, Field
 
 
 # --- Auth Schemas ---
 class LoginRequest(BaseModel):
     email: EmailStr
-    password: str
+    password: str = Field(..., min_length=1, max_length=128)
 
 class TokenResponse(BaseModel):
     access_token: str
@@ -17,8 +17,8 @@ class TokenResponse(BaseModel):
 
 class RegisterRequest(BaseModel):
     email: EmailStr
-    password: str
-    full_name: str
+    password: str = Field(..., min_length=8, max_length=128)
+    full_name: str = Field(..., min_length=1, max_length=255)
     tenant_id: UUID
 
 class AuthUserResponse(BaseModel):
@@ -44,8 +44,8 @@ class TenantResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 class TenantCreate(BaseModel):
-    name: str
-    slug: str
+    name: str = Field(..., min_length=1, max_length=255)
+    slug: str = Field(..., min_length=1, max_length=100, pattern=r"^[a-z0-9-]+$")
     industry: str | None = None
 
 # --- Asset Schemas ---
@@ -159,7 +159,7 @@ class ApiKeyResponse(BaseModel):
 
 
 class ApiKeyCreate(BaseModel):
-    name: str
+    name: str = Field(..., min_length=1, max_length=255)
     scopes: str | None = None
     expires_at: datetime | None = None
 

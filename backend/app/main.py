@@ -1,10 +1,24 @@
 # pyrefly: ignore [missing-import]
+import logging
 from contextlib import asynccontextmanager
+from enum import Enum
 
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 from sqlalchemy import select
+
+logger = logging.getLogger(__name__)
+
+
+class ErrorCode(str, Enum):
+    UNAUTHORIZED = "UNAUTHORIZED"
+    FORBIDDEN = "FORBIDDEN"
+    NOT_FOUND = "NOT_FOUND"
+    VALIDATION_ERROR = "VALIDATION_ERROR"
+    INTERNAL_ERROR = "INTERNAL_ERROR"
+    RATE_LIMITED = "RATE_LIMITED"
 
 from app.config import get_settings
 from app.database import Base, engine
@@ -17,10 +31,12 @@ from app.routers.audit import router as audit_router
 from app.routers.auth import router as auth_router
 from app.routers.dashboard import router as dashboard_router
 from app.routers.events import router as events_router
+from app.routers.ml import router as ml_router
 from app.routers.reports import router as reports_router
 from app.routers.sessions import router as sessions_router
 from app.routers.settings import router as settings_router
 from app.routers.ws import router as ws_router
+from app.services.scheduler import register_weekly_retrain_job
 
 
 @asynccontextmanager
@@ -43,6 +59,7 @@ async def lifespan(app: FastAPI):
                 await compute_all_user_threat_scores(db, tenant.id)
 
     scheduler.add_job(weekly_threat_job, "cron", day_of_week="mon", hour=6, minute=0)
+    register_weekly_retrain_job(scheduler)
     scheduler.start()
 
     yield
@@ -78,6 +95,18 @@ app.include_router(reports_router)
 app.include_router(audit_router)
 app.include_router(ws_router)
 app.include_router(access_router)
+app.include_router(ml_router)
+
+
+# Global exception handler - catch all unhandled errors and return safe JSON
+@app.exception_handler(Exception)
+async def global_exception_handler(request: Request, exc: Exception):
+    logger.error(f"Unhandled exception: {exc}", exc_info=True)
+    return JSONResponse(
+        status_code=500,
+        content={"code": "INTERNAL_ERROR", "detail": "An unexpected error occurred"}
+    )
+
 
 # Background scheduler for periodic tasks
 scheduler = AsyncIOScheduler()

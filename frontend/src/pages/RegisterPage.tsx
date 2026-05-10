@@ -69,7 +69,9 @@ export default function RegisterPage() {
         if (Array.isArray(detail)) {
           setError(detail.map((e: any) => e.msg || e.loc?.join('.')).join(', '))
         } else {
-          setError(typeof detail === 'string' ? detail : 'Validation failed. Please check your input.')
+          setError(
+            typeof detail === 'string' ? detail : 'Validation failed. Please check your input.'
+          )
         }
       } else if (status === 409) {
         setError('An account with this email already exists.')

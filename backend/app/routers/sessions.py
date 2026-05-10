@@ -3,6 +3,7 @@ from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import select
+from sqlalchemy.orm import selectinload, noload
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import get_db
@@ -20,7 +21,15 @@ async def list_sessions(
     current_user: AuthUser = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    q = select(AccessSession).where(AccessSession.tenant_id == current_user.tenant_id)
+    q = (
+        select(AccessSession)
+        .where(AccessSession.tenant_id == current_user.tenant_id)
+        .options(
+            selectinload(AccessSession.user),
+            selectinload(AccessSession.asset),
+            noload(AccessSession.events),  # Events not needed for list view
+        )
+    )
     if status:
         q = q.where(AccessSession.status == status)
     q = q.limit(100)
@@ -55,7 +64,7 @@ async def get_session(
     )
     session = result.scalar_one_or_none()
     if not session:
-        raise HTTPException(status_code=404, detail="Session not found")
+        raise HTTPException(status_code=404, detail={"code": "NOT_FOUND", "detail": "Session not found"})
     return session
 
 
@@ -74,9 +83,9 @@ async def revoke_session(
     )
     session = result.scalar_one_or_none()
     if not session:
-        raise HTTPException(status_code=404, detail="Session not found")
+        raise HTTPException(status_code=404, detail={"code": "NOT_FOUND", "detail": "Session not found"})
     if session.status != "active":
-        raise HTTPException(status_code=400, detail="Session is not active")
+        raise HTTPException(status_code=400, detail={"code": "VALIDATION_ERROR", "detail": "Session is not active"})
 
     now = datetime.now(UTC)
     session.status = "revoked"

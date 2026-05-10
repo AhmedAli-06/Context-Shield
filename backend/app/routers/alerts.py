@@ -3,6 +3,7 @@ from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy import desc, select
+from sqlalchemy.orm import selectinload
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import get_db
@@ -21,7 +22,11 @@ async def list_alerts(
     current_user: AuthUser = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    q = select(Alert).where(Alert.tenant_id == current_user.tenant_id)
+    q = (
+        select(Alert)
+        .where(Alert.tenant_id == current_user.tenant_id)
+        .options(selectinload(Alert.user), selectinload(Alert.asset))
+    )
     if status:
         q = q.where(Alert.status == status)
     q = q.order_by(desc(Alert.triggered_at)).limit(limit)
@@ -43,7 +48,7 @@ async def get_alert(
     )
     alert = result.scalar_one_or_none()
     if not alert:
-        raise HTTPException(status_code=404, detail="Alert not found")
+        raise HTTPException(status_code=404, detail={"code": "NOT_FOUND", "detail": "Alert not found"})
     return alert
 
 
@@ -61,7 +66,7 @@ async def acknowledge_alert(
     )
     alert = result.scalar_one_or_none()
     if not alert:
-        raise HTTPException(status_code=404, detail="Alert not found")
+        raise HTTPException(status_code=404, detail={"code": "NOT_FOUND", "detail": "Alert not found"})
 
     alert.status = "acknowledged"
     alert.acknowledged_at = datetime.now(UTC)
@@ -86,7 +91,7 @@ async def resolve_alert(
     )
     alert = result.scalar_one_or_none()
     if not alert:
-        raise HTTPException(status_code=404, detail="Alert not found")
+        raise HTTPException(status_code=404, detail={"code": "NOT_FOUND", "detail": "Alert not found"})
 
     alert.status = body.status
     alert.resolved_at = datetime.now(UTC)
@@ -111,7 +116,7 @@ async def dismiss_alert(
     )
     alert = result.scalar_one_or_none()
     if not alert:
-        raise HTTPException(status_code=404, detail="Alert not found")
+        raise HTTPException(status_code=404, detail={"code": "NOT_FOUND", "detail": "Alert not found"})
 
     alert.status = "dismissed"
     alert.resolved_at = datetime.now(UTC)

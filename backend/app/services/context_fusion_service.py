@@ -15,9 +15,9 @@ Context includes:
 """
 
 import logging
+from asyncio import timeout
 from datetime import UTC, datetime
 from uuid import UUID
-from asyncio import timeout
 
 from sqlalchemy.ext.asyncio import AsyncSession
 

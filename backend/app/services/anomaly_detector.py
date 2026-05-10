@@ -18,8 +18,12 @@ from uuid import UUID
 import numpy as np
 from sklearn.ensemble import IsolationForest
 
+from app.ml.train import (
+    load_model as ml_load_model,
+    model_exists as ml_model_exists,
+    train_and_persist,
+)
 from app.services.baseline_service import get_model_path
-from app.ml.train import train_and_persist, load_model as ml_load_model, model_exists as ml_model_exists
 
 MODEL_DIR = "ml/models"
 DEFAULT_MODEL_PATH = f"{MODEL_DIR}/anomaly_iforest.joblib"

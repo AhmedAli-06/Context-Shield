@@ -1,8 +1,11 @@
 import asyncio
-from app.database import AsyncSessionLocal
+
 from sqlalchemy import select
+
+from app.database import AsyncSessionLocal
 from app.models.auth import AuthUser
 from app.security import verify_password
+
 
 async def test():
     async with AsyncSessionLocal() as db:

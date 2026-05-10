@@ -76,6 +76,6 @@ async def delete_api_key(
     )
     key = result.scalar_one_or_none()
     if not key:
-        raise HTTPException(status_code=404, detail="API key not found")
+        raise HTTPException(status_code=404, detail={"code": "NOT_FOUND", "detail": "API key not found"})
     key.is_active = False
     await db.commit()

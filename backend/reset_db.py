@@ -1,6 +1,8 @@
 import asyncio
-from app.database import engine, Base
+
 import app.models  # noqa
+from app.database import Base, engine
+
 
 async def reset():
     async with engine.begin() as conn:

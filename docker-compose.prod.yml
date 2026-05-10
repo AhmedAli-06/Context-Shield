@@ -42,12 +42,8 @@ services:
     restart: unless-stopped
     ports:
       - "8000:8000"
-    environment:
-      DATABASE_URL: postgresql+asyncpg://cs_admin:${DB_PASSWORD:-cs_prod_password}@postgres:5432/contextshield
-      REDIS_URL: redis://redis:6379/0
-      JWT_SECRET_KEY: ${JWT_SECRET_KEY:-change-this-in-production}
-      JWT_ACCESS_TOKEN_EXPIRE_MINUTES: "480"
-      CORS_ORIGINS: '["https://app.contextshield.io"]'
+    env_file:
+      - backend/.env.production
     depends_on:
       postgres:
         condition: service_healthy

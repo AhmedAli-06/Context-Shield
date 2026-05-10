@@ -9,7 +9,7 @@ manual triggering, and scheduled retraining (APScheduler).
 import logging
 import os
 import pickle
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from uuid import UUID
 
 from sklearn.ensemble import IsolationForest
@@ -49,7 +49,7 @@ class TrainingMetrics:
         self.n_train = n_train
         self.n_test = n_test
         self.n_anomalies = n_anomalies
-        self.timestamp = datetime.now(timezone.utc).isoformat()
+        self.timestamp = datetime.now(UTC).isoformat()
 
     def to_dict(self) -> dict:
         return {
@@ -362,6 +362,6 @@ if __name__ == "__main__":
         print("Running automated training pipeline...")
         path, metrics = train_and_persist(n_records=1000)
         print(f"\nModel saved: {path}")
-        print(f"Evaluation metrics:")
+        print("Evaluation metrics:")
         for key, value in metrics.to_dict().items():
             print(f"  {key}: {value}")

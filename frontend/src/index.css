@@ -196,7 +196,8 @@ html, body, #root {
   background: rgba(255, 255, 255, 0.03);
 }
 
-.sidebar-nav a.active {
+.sidebar-nav a.active,
+.sidebar-nav a.nav-item-active {
   color: var(--ink);
   background: var(--surface-card);
   border: 1px solid var(--hairline-strong);
@@ -209,7 +210,8 @@ html, body, #root {
   flex-shrink: 0;
 }
 
-.sidebar-nav a.active svg {
+.sidebar-nav a.active svg,
+.sidebar-nav a.nav-item-active svg {
   opacity: 1;
 }
 
