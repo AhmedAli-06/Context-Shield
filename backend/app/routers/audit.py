@@ -1,14 +1,16 @@
 from uuid import UUID
+
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
-from sqlalchemy import select, desc
+from sqlalchemy import desc, select
 from sqlalchemy.ext.asyncio import AsyncSession
+
 from app.database import get_db
-from app.security import get_current_user
-from app.models.auth import AuthUser
-from app.models.audit import AuditLog
-from app.schemas import AuditLogResponse
 from app.middleware.audit import verify_audit_entry
+from app.models.audit import AuditLog
+from app.models.auth import AuthUser
+from app.schemas import AuditLogResponse
+from app.security import get_current_user
 
 router = APIRouter(prefix="/api/v1/audit", tags=["Audit"])
 

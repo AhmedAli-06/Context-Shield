@@ -1,12 +1,14 @@
-from datetime import datetime, timezone, timedelta
+from datetime import UTC, datetime, timedelta
+
 from fastapi import APIRouter, Depends, Query
-from sqlalchemy import select, func, desc
+from sqlalchemy import desc, select
 from sqlalchemy.ext.asyncio import AsyncSession
+
 from app.database import get_db
-from app.security import get_current_user
-from app.models.auth import AuthUser
 from app.models.access import AccessEvent
+from app.models.auth import AuthUser
 from app.schemas import AccessEventResponse
+from app.security import get_current_user
 
 router = APIRouter(prefix="/api/v1/events", tags=["Access Events"])
 
@@ -33,7 +35,7 @@ async def recent_events(
     current_user: AuthUser = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    cutoff = datetime.now(timezone.utc) - timedelta(hours=hours)
+    cutoff = datetime.now(UTC) - timedelta(hours=hours)
     result = await db.execute(
         select(AccessEvent)
         .where(AccessEvent.tenant_id == current_user.tenant_id, AccessEvent.occurred_at >= cutoff)

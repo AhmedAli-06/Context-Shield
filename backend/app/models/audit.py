@@ -1,12 +1,15 @@
 import uuid
-from datetime import datetime, timezone
-from sqlalchemy import String, Text, DateTime, ForeignKey
+from datetime import UTC, datetime
+
+from sqlalchemy import DateTime, ForeignKey, String, Text
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column
+
 from app.database import Base
 
+
 def utcnow():
-    return datetime.now(timezone.utc)
+    return datetime.now(UTC)
 
 class AuditLog(Base):
     __tablename__ = "audit_logs"

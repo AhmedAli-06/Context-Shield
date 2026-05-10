@@ -12,10 +12,10 @@ Each sub-score is [0.0, 1.0] where 1.0 = fully trusted.
 Final trust = weighted sum, clamped to [0.0, 1.0].
 """
 
-import random
 import math
-from datetime import datetime, timezone
+import random
 from dataclasses import dataclass, field
+from datetime import UTC, datetime
 
 
 @dataclass
@@ -143,7 +143,7 @@ class TrustScoreEngine:
         t0 = time.monotonic_ns()
 
         if occurred_at is None:
-            occurred_at = datetime.now(timezone.utc)
+            occurred_at = datetime.now(UTC)
 
         identity = self.compute_identity_score(credential_active, user_active, credential_expired)
         temporal = self.compute_temporal_score(occurred_at, typical_start_hour, typical_end_hour)

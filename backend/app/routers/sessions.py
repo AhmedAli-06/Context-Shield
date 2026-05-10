@@ -1,13 +1,15 @@
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from uuid import UUID
+
 from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy import select, update
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
+
 from app.database import get_db
-from app.security import get_current_user, require_role
-from app.models.auth import AuthUser
 from app.models.access import AccessSession
-from app.schemas import SessionResponse, RevokeResponse
+from app.models.auth import AuthUser
+from app.schemas import RevokeResponse, SessionResponse
+from app.security import get_current_user, require_role
 
 router = APIRouter(prefix="/api/v1/sessions", tags=["Sessions"])
 
@@ -76,7 +78,7 @@ async def revoke_session(
     if session.status != "active":
         raise HTTPException(status_code=400, detail="Session is not active")
 
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     session.status = "revoked"
     session.ended_at = now
     if session.started_at:

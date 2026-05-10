@@ -4,12 +4,14 @@ import json
 import time
 import uuid
 from uuid import UUID
-from jose import jwt
+
 from fastapi import Request, Response
+from jose import jwt
 from starlette.middleware.base import BaseHTTPMiddleware
+
+from app.config import get_settings
 from app.database import AsyncSessionLocal
 from app.models.audit import AuditLog
-from app.config import get_settings
 
 
 def _hmac_secret() -> bytes:

@@ -3,21 +3,21 @@ Seed script — populates the database with pilot data for demo.
 Run: python -m app.seed
 """
 import asyncio
-import uuid
 import random
-from datetime import datetime, timezone, timedelta
+import uuid
+from datetime import UTC, datetime, timedelta
+
 from sqlalchemy import select
-from app.database import AsyncSessionLocal, engine, Base
-from app.models.tenant import Tenant, TenantConfig
-from app.models.user import User, Credential
-from app.models.asset import Asset, AssetZone, Project, ProjectMember, AssetProject
-from app.models.access import AccessEvent, AccessSession
+
+from app.database import AsyncSessionLocal, Base, engine
+from app.models.access import AccessEvent
 from app.models.alert import Alert
+from app.models.asset import Asset, AssetProject, AssetZone, Project, ProjectMember
 from app.models.auth import AuthUser, Role, UserRole
+from app.models.tenant import Tenant, TenantConfig
+from app.models.user import Credential, User
 from app.security import hash_password
 from app.services.trust_engine import TrustScoreEngine
-import app.models  # noqa: ensure all models registered
-
 
 TENANT_ID = uuid.UUID("a1b2c3d4-e5f6-7890-abcd-ef1234567890")
 DEPARTMENTS = ["Engineering", "Security", "Operations", "Management", "Maintenance"]
@@ -136,7 +136,7 @@ async def seed():
 
         # --- Simulated Access Events ---
         engine_ts = TrustScoreEngine()
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         events_created = 0
 
         for day_offset in range(7, -1, -1):
@@ -195,7 +195,7 @@ async def seed():
 
         await db.commit()
         print(f"[OK] Seeded: 1 tenant, {len(users)} users, {len(assets)} assets, {events_created} events")
-        print(f"  Admin login: admin@meridian-mfg.com / ContextShield2025!")
+        print("  Admin login: admin@meridian-mfg.com / ContextShield2025!")
 
 
 if __name__ == "__main__":

@@ -1,12 +1,15 @@
 import uuid
-from datetime import datetime, timezone
-from sqlalchemy import String, Float, Integer, Text, DateTime, ForeignKey
+from datetime import UTC, datetime
+
+from sqlalchemy import DateTime, Float, ForeignKey, Integer, String, Text
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column
+
 from app.database import Base
 
+
 def utcnow():
-    return datetime.now(timezone.utc)
+    return datetime.now(UTC)
 
 class Alert(Base):
     __tablename__ = "alerts"

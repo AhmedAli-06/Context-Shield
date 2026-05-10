@@ -1,12 +1,14 @@
+from uuid import UUID
+
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
-from uuid import UUID
+
 from app.database import get_db
-from app.security import get_current_user
-from app.models.auth import AuthUser
 from app.models.asset import Asset
+from app.models.auth import AuthUser
 from app.schemas import AssetResponse
+from app.security import get_current_user
 
 router = APIRouter(prefix="/api/v1/assets", tags=["Assets"])
 

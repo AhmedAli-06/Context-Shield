@@ -1,13 +1,14 @@
-import uuid
 import secrets
-from datetime import datetime, timezone
+import uuid
+
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
+
 from app.database import get_db
-from app.security import get_current_user, require_role, hash_password
-from app.models.auth import AuthUser, ApiKey
-from app.schemas import ApiKeyResponse, ApiKeyCreatedResponse, ApiKeyCreate
+from app.models.auth import ApiKey, AuthUser
+from app.schemas import ApiKeyCreate, ApiKeyCreatedResponse, ApiKeyResponse
+from app.security import hash_password, require_role
 
 router = APIRouter(prefix="/api/v1/api-keys", tags=["API Keys"])
 

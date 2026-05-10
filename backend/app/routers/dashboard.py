@@ -1,15 +1,17 @@
-from datetime import datetime, timezone, timedelta
+from datetime import UTC, datetime
+
 # pyrefly: ignore [missing-import]
 from fastapi import APIRouter, Depends
-from sqlalchemy import select, func
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
+
 from app.database import get_db
-from app.security import get_current_user
-from app.models.auth import AuthUser
-from app.models.asset import Asset
 from app.models.access import AccessEvent, AccessSession
 from app.models.alert import Alert
+from app.models.asset import Asset
+from app.models.auth import AuthUser
 from app.schemas import DashboardStats
+from app.security import get_current_user
 
 router = APIRouter(prefix="/api/v1/dashboard", tags=["Dashboard"])
 
@@ -20,7 +22,7 @@ async def get_stats(
     db: AsyncSession = Depends(get_db),
 ):
     tid = current_user.tenant_id
-    today_start = datetime.now(timezone.utc).replace(hour=0, minute=0, second=0, microsecond=0)
+    today_start = datetime.now(UTC).replace(hour=0, minute=0, second=0, microsecond=0)
 
     total_assets = (await db.execute(
         select(func.count()).select_from(Asset).where(Asset.tenant_id == tid)

@@ -1,13 +1,15 @@
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from uuid import UUID
+
 from fastapi import APIRouter, Depends, HTTPException, Query
-from sqlalchemy import select, desc
+from sqlalchemy import desc, select
 from sqlalchemy.ext.asyncio import AsyncSession
+
 from app.database import get_db
-from app.security import get_current_user, require_role
-from app.models.auth import AuthUser
 from app.models.alert import Alert
+from app.models.auth import AuthUser
 from app.schemas import AlertResponse, AlertUpdate
+from app.security import get_current_user, require_role
 
 router = APIRouter(prefix="/api/v1/alerts", tags=["Alerts"])
 
@@ -62,7 +64,7 @@ async def acknowledge_alert(
         raise HTTPException(status_code=404, detail="Alert not found")
 
     alert.status = "acknowledged"
-    alert.acknowledged_at = datetime.now(timezone.utc)
+    alert.acknowledged_at = datetime.now(UTC)
     alert.acknowledged_by = current_user.id
     await db.commit()
     await db.refresh(alert)
@@ -87,7 +89,7 @@ async def resolve_alert(
         raise HTTPException(status_code=404, detail="Alert not found")
 
     alert.status = body.status
-    alert.resolved_at = datetime.now(timezone.utc)
+    alert.resolved_at = datetime.now(UTC)
     alert.resolved_by = current_user.id
     alert.resolution_notes = body.resolution_notes
     await db.commit()
@@ -112,7 +114,7 @@ async def dismiss_alert(
         raise HTTPException(status_code=404, detail="Alert not found")
 
     alert.status = "dismissed"
-    alert.resolved_at = datetime.now(timezone.utc)
+    alert.resolved_at = datetime.now(UTC)
     alert.resolved_by = current_user.id
     alert.resolution_notes = "Dismissed by security officer"
     await db.commit()

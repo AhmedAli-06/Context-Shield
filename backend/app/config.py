@@ -1,5 +1,6 @@
-from pydantic_settings import BaseSettings
 from functools import lru_cache
+
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
@@ -7,6 +8,9 @@ class Settings(BaseSettings):
     APP_NAME: str = "ContextShield"
     APP_VERSION: str = "0.1.0"
     DEBUG: bool = True
+
+    # Environment
+    ENVIRONMENT: str = "development"
 
     # Database
     DATABASE_URL: str = "postgresql+asyncpg://cs_admin:cs_dev_password_2025@localhost:5432/contextshield"
@@ -26,11 +30,23 @@ class Settings(BaseSettings):
     # Audit
     HMAC_SECRET: str = "contextshield-hmac-secret-change-in-production"
 
-    class Config:
-        env_file = ".env"
-        case_sensitive = True
+    # Alerting (Resend)
+    RESEND_API_KEY: str = ""
+    ALERT_EMAIL: str = ""
+
+    # ML Models
+    MODEL_DIR: str = "ml/models"
+
+    model_config = SettingsConfigDict(
+        case_sensitive=True,
+        env_file=(".env.local", ".env.staging", ".env.production", ".env"),
+        env_file优先级="override"
+    )
 
 
 @lru_cache
 def get_settings() -> Settings:
-    return Settings()
+    settings = Settings()
+    print(f"[Config] Running in {settings.ENVIRONMENT} environment")
+    print(f"[Config] DEBUG={settings.DEBUG}")
+    return settings

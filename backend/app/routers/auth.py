@@ -1,13 +1,15 @@
-from datetime import datetime, timezone
+from datetime import UTC, datetime
+
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
+
+from app.config import get_settings
 from app.database import get_db
 from app.models.auth import AuthUser
-from app.schemas import TokenResponse, RegisterRequest, AuthUserResponse
-from app.security import hash_password, verify_password, create_access_token, get_current_user
-from app.config import get_settings
+from app.schemas import AuthUserResponse, RegisterRequest, TokenResponse
+from app.security import create_access_token, get_current_user, hash_password, verify_password
 
 settings = get_settings()
 router = APIRouter(prefix="/api/v1/auth", tags=["Authentication"])
@@ -21,11 +23,11 @@ async def login(form: OAuth2PasswordRequestForm = Depends(), db: AsyncSession = 
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid credentials")
     if not user.is_active:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Account disabled")
-    if user.locked_until and user.locked_until > datetime.now(timezone.utc):
+    if user.locked_until and user.locked_until > datetime.now(UTC):
         raise HTTPException(status_code=status.HTTP_423_LOCKED, detail="Account temporarily locked")
 
     user.failed_login_count = 0
-    user.last_login_at = datetime.now(timezone.utc)
+    user.last_login_at = datetime.now(UTC)
     await db.commit()
 
     token = create_access_token({"sub": str(user.id), "tenant_id": str(user.tenant_id)})

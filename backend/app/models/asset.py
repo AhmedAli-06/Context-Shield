@@ -1,12 +1,23 @@
 import uuid
-from datetime import datetime, date, timezone
-from sqlalchemy import String, Boolean, Float, Integer, Text, DateTime, Date, ForeignKey, UniqueConstraint
+from datetime import UTC, date, datetime
+
+from sqlalchemy import (
+    Boolean,
+    Date,
+    DateTime,
+    Float,
+    ForeignKey,
+    String,
+    Text,
+    UniqueConstraint,
+)
 from sqlalchemy.orm import Mapped, mapped_column, relationship
+
 from app.database import Base
 
 
 def utcnow():
-    return datetime.now(timezone.utc)
+    return datetime.now(UTC)
 
 
 class AssetZone(Base):
