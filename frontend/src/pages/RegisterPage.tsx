@@ -36,24 +36,51 @@ export default function RegisterPage() {
     e.preventDefault()
     setError('')
 
-    if (password !== confirmPassword) {
-      setError('Passwords do not match.')
+    // Client-side validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+    if (!emailRegex.test(email)) {
+      setError('Please enter a valid email address.')
+      return
+    }
+    if (name.trim().length < 2) {
+      setError('Please enter your full name.')
       return
     }
     if (password.length < 8) {
       setError('Password must be at least 8 characters.')
       return
     }
+    if (password !== confirmPassword) {
+      setError('Passwords do not match.')
+      return
+    }
 
     setLoading(true)
     try {
       await register(email, password, name)
-      toast.success('Account created successfully!')
-      navigate('/', { replace: true })
+      toast.success('Account created! Please log in.')
+      navigate('/login', { replace: true })
     } catch (err: any) {
-      const msg = err?.response?.data?.detail || err?.message || 'Registration failed. Try again.'
-      setError(msg)
-      toast.error(msg)
+      const status = err?.response?.status
+      const detail = err?.response?.data?.detail
+
+      // Parse field-level validation errors from 422
+      if (status === 422 && detail) {
+        if (Array.isArray(detail)) {
+          setError(detail.map((e: any) => e.msg || e.loc?.join('.')).join(', '))
+        } else {
+          setError(typeof detail === 'string' ? detail : 'Validation failed. Please check your input.')
+        }
+      } else if (status === 409) {
+        setError('An account with this email already exists.')
+      } else if (status === 400) {
+        setError(detail || 'Invalid registration details. Please check your input.')
+      } else if (status >= 500) {
+        setError('Something went wrong. Please try again later.')
+      } else {
+        setError('Registration failed. Please try again.')
+      }
+      toast.error('Registration failed.')
     } finally {
       setLoading(false)
     }

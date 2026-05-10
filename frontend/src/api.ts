@@ -18,10 +18,14 @@ api.interceptors.request.use(config => {
 api.interceptors.response.use(
   r => r,
   err => {
-    if (err.response?.status === 401) {
+    const status = err.response?.status
+    if (status === 401) {
       localStorage.removeItem('cs_token')
       localStorage.removeItem('cs_user')
-      window.location.href = '/login'
+      // Avoid toast loop when already on login page
+      if (!window.location.pathname.startsWith('/login')) {
+        window.location.href = '/login?reason=session_expired'
+      }
     }
     return Promise.reject(err)
   }

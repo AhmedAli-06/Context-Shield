@@ -32,12 +32,35 @@ export default function LoginPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError('')
+
+    // Client-side validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+    if (!emailRegex.test(email)) {
+      setError('Please enter a valid email address.')
+      return
+    }
+    if (password.length < 1) {
+      setError('Please enter your password.')
+      return
+    }
+
     setLoading(true)
     try {
       await login(email, password)
       navigate('/', { replace: true })
-    } catch {
-      setError('Invalid credentials. Try again.')
+    } catch (err: any) {
+      const status = err?.response?.status
+      if (status === 401) {
+        setError('Invalid email or password.')
+      } else if (status === 422) {
+        setError('Please check your input and try again.')
+      } else if (status === 403) {
+        setError('Account locked. Please contact your administrator.')
+      } else if (status >= 500) {
+        setError('Something went wrong. Please try again later.')
+      } else {
+        setError('Login failed. Please try again.')
+      }
     } finally {
       setLoading(false)
     }
