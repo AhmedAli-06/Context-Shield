@@ -31,7 +31,6 @@ from app.routers.assets import router as assets_router
 from app.routers.audit import router as audit_router
 from app.routers.auth import router as auth_router
 from app.routers.dashboard import router as dashboard_router
-from app.routers.demo import router as demo_router
 from app.routers.events import router as events_router
 from app.routers.ml import router as ml_router
 from app.routers.reports import router as reports_router
