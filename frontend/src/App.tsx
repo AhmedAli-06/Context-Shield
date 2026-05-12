@@ -103,12 +103,19 @@ function NavItem({
 function AppShell() {
   const { user, logout } = useAuth()
   const location = useLocation()
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
 
   if (location.pathname === '/login' || location.pathname === '/register') return null
 
   return (
     <div className="app-layout">
-      <aside className="sidebar">
+      <button className="mobile-menu-btn" onClick={() => setMobileMenuOpen(!mobileMenuOpen)} aria-label="Toggle menu">
+        {mobileMenuOpen ? <X size={20} /> : <Menu size={20} />}
+      </button>
+
+      {mobileMenuOpen && <div className="sidebar-overlay" onClick={() => setMobileMenuOpen(false)} />}
+
+      <aside className={`sidebar ${mobileMenuOpen ? 'sidebar-open' : ''}`}>
         <div className="sidebar-brand">
           <div className="logo-mark">CS</div>
           <span className="brand-text">ContextShield</span>
@@ -116,22 +123,22 @@ function AppShell() {
           <ConnectionStatus />
         </div>
 
-        <nav className="sidebar-nav">
-          <div className="nav-section-label">Main</div>
-          <NavItem to="/" icon={LayoutDashboard} label="Dashboard" />
-          <NavItem to="/assets" icon={Shield} label="Assets" />
-          <NavItem to="/events" icon={Activity} label="Events" />
-          <NavItem to="/alerts" icon={AlertTriangle} label="Alerts" />
-          <div className="nav-section-label">Monitoring</div>
-          <NavItem to="/live-feed" icon={Radio} label="Live Feed" />
-          <NavItem to="/simulator" icon={Radio} label="Simulator" />
-          <NavItem to="/sessions" icon={Monitor} label="Sessions" />
-          <NavItem to="/audit-log" icon={Fingerprint} label="Audit Log" />
-          <div className="nav-section-label">Management</div>
-          <NavItem to="/api-keys" icon={Key} label="API Keys" />
-          <NavItem to="/reports" icon={FileText} label="Reports" />
-          <NavItem to="/settings" icon={Settings} label="Settings" />
-        </nav>
+          <nav className="sidebar-nav" onClick={() => setMobileMenuOpen(false)}>
+            <div className="nav-section-label">Main</div>
+            <NavItem to="/" icon={LayoutDashboard} label="Dashboard" />
+            <NavItem to="/assets" icon={Shield} label="Assets" />
+            <NavItem to="/events" icon={Activity} label="Events" />
+            <NavItem to="/alerts" icon={AlertTriangle} label="Alerts" />
+            <div className="nav-section-label">Monitoring</div>
+            <NavItem to="/live-feed" icon={Radio} label="Live Feed" />
+            <NavItem to="/simulator" icon={Radio} label="Simulator" />
+            <NavItem to="/sessions" icon={Monitor} label="Sessions" />
+            <NavItem to="/audit-log" icon={Fingerprint} label="Audit Log" />
+            <div className="nav-section-label">Management</div>
+            <NavItem to="/api-keys" icon={Key} label="API Keys" />
+            <NavItem to="/reports" icon={FileText} label="Reports" />
+            <NavItem to="/settings" icon={Settings} label="Settings" />
+          </nav>
 
         <div className="sidebar-footer">
           <div className="avatar">{user?.full_name?.charAt(0) || 'U'}</div>

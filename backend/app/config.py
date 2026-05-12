@@ -40,7 +40,6 @@ class Settings(BaseSettings):
     model_config = SettingsConfigDict(
         case_sensitive=True,
         env_file=(".env.local", ".env.staging", ".env.production", ".env"),
-        env_file优先级="override"
     )
 
 

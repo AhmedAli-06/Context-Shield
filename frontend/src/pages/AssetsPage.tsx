@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { Shield, Search, Plus, Server, Cpu, Wrench, HardDrive, Box } from 'lucide-react'
+import { AssetsSkeleton } from '../components/Skeleton'
 
 const api = import.meta.env.VITE_API_URL || 'http://localhost:8000'
 
@@ -39,16 +40,19 @@ const item = {
 export default function AssetsPage() {
   const [assets, setAssets] = useState<Asset[]>([])
   const [search, setSearch] = useState('')
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     const token = localStorage.getItem('token')
     if (!token) return
+    setLoading(true)
     fetch(`${api}/api/v1/assets/`, {
       headers: { Authorization: `Bearer ${token}` },
     })
       .then(r => r.json())
       .then(data => setAssets(Array.isArray(data) ? data : []))
       .catch(() => {})
+      .finally(() => setLoading(false))
   }, [])
 
   const filtered = assets.filter(a => a.name.toLowerCase().includes(search.toLowerCase()))
@@ -56,6 +60,8 @@ export default function AssetsPage() {
   const criticalCount = assets.filter(a => a.criticality === 'critical').length
   const highCount = assets.filter(a => a.criticality === 'high').length
   const onlineCount = assets.filter(a => a.status !== 'offline').length
+
+  if (loading) return <AssetsSkeleton />
 
   return (
     <motion.div variants={stagger} initial="hidden" animate="visible">
