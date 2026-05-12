@@ -104,7 +104,6 @@ app.include_router(audit_router)
 app.include_router(ws_router)
 app.include_router(access_router)
 app.include_router(ml_router)
-app.include_router(demo_router)
 
 
 # Global exception handler - catch all unhandled errors and return safe JSON
