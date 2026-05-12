@@ -37,6 +37,9 @@ class Settings(BaseSettings):
     # ML Models
     MODEL_DIR: str = "ml/models"
 
+    # Demo mode
+    DEMO_MODE: bool = False
+
     model_config = SettingsConfigDict(
         case_sensitive=True,
         env_file=(".env.local", ".env.staging", ".env.production", ".env"),
