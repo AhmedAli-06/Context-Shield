@@ -30,7 +30,9 @@ import {
 } from 'lucide-react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { Toaster } from 'react-hot-toast'
+import { ErrorBoundary } from 'react-error-boundary'
 import { useState } from 'react'
+import { WebSocketProvider, useWebSocket } from './context/WebSocketContext'
 import './index.css'
 
 function ErrorFallback({ error, resetErrorBoundary }: { error: Error; resetErrorBoundary: () => void }) {
