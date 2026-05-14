@@ -11,12 +11,28 @@ settings = get_settings()
 logger = logging.getLogger(__name__)
 
 engine = create_async_engine(
-    settings.DATABASE_URL.replace("+asyncpg", "+psycopg"),
+    settings.DATABASE_URL,
     echo=settings.DATABASE_ECHO,
     pool_size=5,
     max_overflow=5,
     pool_pre_ping=True,
     pool_recycle=300,
+    connect_args={
+        "statement_cache_size": 0,
+    },
+)
+
+
+@event.listens_for(engine.sync_engine, "connect")
+def engine_connect(dbapi_connection, connection_record):
+    setattr(dbapi_connection, "_prepared_statement_cache", None)
+    setattr(dbapi_connection, "_prepared_statement_name", None)
+
+
+AsyncSessionLocal = async_sessionmaker(
+    engine,
+    class_=AsyncSession,
+    expire_on_commit=False,
 )
 
 AsyncSessionLocal = async_sessionmaker(
