@@ -1,7 +1,7 @@
-import { useState, useEffect, useRef, useCallback } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
-import { Lock, ArrowRight, Loader2, UserPlus, Shield, Activity } from 'lucide-react'
+import { ArrowRight, Loader2, UserPlus } from 'lucide-react'
 import { motion } from 'framer-motion'
 
 function ParticleCanvas() {

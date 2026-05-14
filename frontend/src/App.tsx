@@ -14,13 +14,13 @@ import LiveFeedPage from './pages/LiveFeedPage'
 import SettingsPage from './pages/SettingsPage'
 import SimulatorPage from './pages/SimulatorPage'
 import {
-  LayoutDashboard, Shield, AlertTriangle, Activity, Settings, LogOut, Key, FileText, Radio, Fingerprint, Monitor, Menu, X, Gauge,
+  Shield, AlertTriangle, Activity, Settings, LogOut, Key, FileText, Radio, Fingerprint, Monitor, Menu, X, Gauge,
 } from 'lucide-react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { Toaster } from 'react-hot-toast'
 import { ErrorBoundary } from 'react-error-boundary'
-import { useState, lazy, Suspense } from 'react'
-import { WebSocketProvider, useWebSocket } from './context/WebSocketContext'
+import { useState } from 'react'
+import { WebSocketProvider } from './context/WebSocketContext'
 import './index.css'
 
 function ErrorFallback({ error, resetErrorBoundary }: { error: Error; resetErrorBoundary: () => void }) {
@@ -52,18 +52,6 @@ function NavItem({ to, icon: Icon, label, badge }: { to: string; icon: any; labe
       <span>{label}</span>
       {badge && <span className="nav-badge">{badge}</span>}
     </NavLink>
-  )
-}
-
-function ConnectionStatus() {
-  const { status } = useWebSocket()
-  const config = { connected: { color: '#2ecc8a', label: 'Live' }, connecting: { color: '#ffc53d', label: 'Connecting...' }, disconnected: { color: '#ff4757', label: 'Offline' } }
-  const c = config[status]
-  return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '3px 10px', borderRadius: 4, background: 'var(--surface-deep)', border: '1px solid var(--hairline)', fontSize: 11, cursor: 'default' }}>
-      <span style={{ width: 6, height: 6, borderRadius: '50%', background: c.color, boxShadow: `0 0 6px ${c.color}40` }} />
-      <span style={{ color: 'var(--ash)' }}>{c.label}</span>
-    </div>
   )
 }
 
