@@ -1,8 +1,5 @@
-import json
-import logging
 import uuid
 
-from sqlalchemy import event
 from sqlalchemy.dialects.postgresql.asyncpg import AsyncAdapt_asyncpg_dbapi
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 from sqlalchemy.orm import DeclarativeBase
@@ -10,7 +7,6 @@ from sqlalchemy.orm import DeclarativeBase
 from app.config import get_settings
 
 settings = get_settings()
-logger = logging.getLogger(__name__)
 
 # Patch prepared statement name to be unique per connection to avoid pgbouncer conflicts
 _orig_name_func = AsyncAdapt_asyncpg_dbapi.Connection._prepared_statement_name_func
@@ -33,13 +29,6 @@ engine = create_async_engine(
     connect_args={
         "statement_cache_size": 0,
     },
-)
-
-
-AsyncSessionLocal = async_sessionmaker(
-    engine,
-    class_=AsyncSession,
-    expire_on_commit=False,
 )
 
 AsyncSessionLocal = async_sessionmaker(
