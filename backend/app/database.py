@@ -1,6 +1,7 @@
 import json
 import logging
 
+from sqlalchemy import event
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 from sqlalchemy.orm import DeclarativeBase
 
@@ -8,19 +9,6 @@ from app.config import get_settings
 
 settings = get_settings()
 logger = logging.getLogger(__name__)
-
-# Use asyncpg, but handle pgbouncer prepared statement conflicts
-import asyncpg.connection
-_orig_prepare = asyncpg.connection.Connection.prepare
-
-async def _safe_prepare(self, query, *, timeout=None, name=None, **kwargs):
-    try:
-        return await _orig_prepare(self, query, timeout=timeout, name=name, **kwargs)
-    except asyncpg.exceptions.DuplicatePreparedStatementError:
-        await self.execute(f"DEALLOCATE ALL")
-        return await _orig_prepare(self, query, timeout=timeout, name=name, **kwargs)
-
-asyncpg.connection.Connection.prepare = _safe_prepare
 
 engine = create_async_engine(
     settings.DATABASE_URL,
@@ -32,6 +20,20 @@ engine = create_async_engine(
     connect_args={
         "statement_cache_size": 0,
     },
+)
+
+
+@event.listens_for(engine.sync_engine, "connect")
+def engine_connect(dbapi_connection, connection_record):
+    if hasattr(dbapi_connection, "_prepared_statement_cache"):
+        dbapi_connection._prepared_statement_cache = None
+        logger.info("Disabled prepared statement cache on DB connection")
+
+
+AsyncSessionLocal = async_sessionmaker(
+    engine,
+    class_=AsyncSession,
+    expire_on_commit=False,
 )
 
 AsyncSessionLocal = async_sessionmaker(
