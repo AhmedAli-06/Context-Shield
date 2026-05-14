@@ -23,6 +23,21 @@ import { useState } from 'react'
 import { WebSocketProvider } from './context/WebSocketContext'
 import './index.css'
 
+function ShieldLogo({ size = 30 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 30 30" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <linearGradient id="logoGrad" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0%" stopColor="#ff1a1a" /><stop offset="100%" stopColor="#cc1100" />
+        </linearGradient>
+      </defs>
+      <path d="M15 2L4 7v6c0 7.5 4.5 14.5 11 17 6.5-2.5 11-9.5 11-17V7L15 2z" fill="url(#logoGrad)" opacity="0.9" />
+      <path d="M15 2L4 7v6c0 7.5 4.5 14.5 11 17 6.5-2.5 11-9.5 11-17V7L15 2z" stroke="#ff1a1a" strokeWidth="1" fill="none" opacity="0.3" />
+      <path d="M11 15l3 3 5-6" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" opacity="0.9" />
+    </svg>
+  )
+}
+
 function ErrorFallback({ error, resetErrorBoundary }: { error: Error; resetErrorBoundary: () => void }) {
   return (
     <div className="loading-screen" style={{ flexDirection: 'column', gap: 16 }}>
@@ -69,8 +84,8 @@ function AppShell() {
       {mobileOpen && <div className="sidebar-overlay" onClick={() => setMobileOpen(false)} />}
 
       <aside className={`sidebar ${mobileOpen ? 'sidebar-open' : ''}`}>
-        <div className="sidebar-brand">
-          <div className="logo-mark">CS</div>
+          <div className="sidebar-brand">
+          <ShieldLogo size={28} />
           <span className="brand-text">ContextShield</span>
           <span className="brand-version">v0.2</span>
         </div>
