@@ -46,7 +46,7 @@ export const register = (data: {
   tenant_id?: string
 }) => api.post('/auth/register', data)
 
-export const getMe = () => api.get('/auth/me')
+export const getMe = () => api.post('/auth/me')
 
 // Dashboard
 export const getDashboardStats = () => api.get('/dashboard/stats')
