@@ -1,12 +1,25 @@
 import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
-import { Shield, Search, Plus, Server, Cpu, Wrench, HardDrive, Box } from 'lucide-react'
+import { Shield, Search, Plus, Server, Cpu, Wrench, HardDrive, Box, RefreshCw } from 'lucide-react'
 import { AssetsSkeleton } from '../components/Skeleton'
+import { getAssets } from '../api'
 
-const api = import.meta.env.VITE_API_URL || 'http://localhost:8000'
+export default function AssetsPage() {
+  const [assets, setAssets] = useState<Asset[]>([])
+  const [search, setSearch] = useState('')
+  const [loading, setLoading] = useState(true)
+
+  const load = () => {
+    setLoading(true)
+    getAssets()
+      .then(r => setAssets(Array.isArray(r.data) ? r.data : []))
+      .catch(() => {})
+      .finally(() => setLoading(false))
+  }
+
+  useEffect(() => { load() }, [])
 
 const assetIcons: Record<string, any> = {
-  cnc_machine: Cpu,
   server: Server,
   welding_station: Wrench,
   assembly_line: Box,
@@ -42,18 +55,8 @@ export default function AssetsPage() {
   const [search, setSearch] = useState('')
   const [loading, setLoading] = useState(true)
 
-  useEffect(() => {
-    const token = localStorage.getItem('token')
-    if (!token) return
+  const load = () => {
     setLoading(true)
-    fetch(`${api}/api/v1/assets/`, {
-      headers: { Authorization: `Bearer ${token}` },
-    })
-      .then(r => r.json())
-      .then(data => setAssets(Array.isArray(data) ? data : []))
-      .catch(() => {})
-      .finally(() => setLoading(false))
-  }, [])
 
   const filtered = assets.filter(a => a.name.toLowerCase().includes(search.toLowerCase()))
 
@@ -66,8 +69,15 @@ export default function AssetsPage() {
   return (
     <motion.div variants={stagger} initial="hidden" animate="visible">
       <motion.div className="page-header" variants={item}>
-        <h2>Assets</h2>
-        <p>Monitor and manage all registered assets ({assets.length} total)</p>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <div>
+            <h2>Assets</h2>
+            <p>Monitor and manage all registered assets ({assets.length} total)</p>
+          </div>
+          <button className="btn btn-ghost btn-sm" onClick={load}>
+            <RefreshCw size={13} /> Refresh
+          </button>
+        </div>
       </motion.div>
 
       <motion.div className="stats-grid" variants={item}>

@@ -1,8 +1,7 @@
 import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
-import { Activity } from 'lucide-react'
-
-const api = import.meta.env.VITE_API_URL || 'http://localhost:8000'
+import { Activity, RefreshCw } from 'lucide-react'
+import { getEvents } from '../api'
 
 interface Event {
   id: string
@@ -30,32 +29,39 @@ const trustColor = (v: number) =>
 export default function EventsPage() {
   const [events, setEvents] = useState<Event[]>([])
   const [filter, setFilter] = useState('all')
+  const [loading, setLoading] = useState(true)
 
-  useEffect(() => {
-    const token = localStorage.getItem('token')
-    if (!token) return
-    fetch(`${api}/api/v1/events/`, {
-      headers: { Authorization: `Bearer ${token}` },
-    })
-      .then(r => r.json())
-      .then(data => setEvents(Array.isArray(data) ? data : []))
+  const load = () => {
+    setLoading(true)
+    getEvents(50)
+      .then(r => setEvents(Array.isArray(r.data) ? r.data : []))
       .catch(() => {})
-  }, [])
+      .finally(() => setLoading(false))
+  }
+
+  useEffect(() => { load() }, [])
 
   const filtered = filter === 'all' ? events : events.filter(e => e.decision === filter)
 
   return (
     <motion.div variants={stagger} initial="hidden" animate="visible">
       <motion.div className="page-header" variants={item}>
-        <h2>Events</h2>
-        <p>Access events and trust score history ({events.length} total)</p>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <div>
+            <h2>Events</h2>
+            <p>Access events and trust score history ({events.length} total)</p>
+          </div>
+          <button className="btn btn-ghost btn-sm" onClick={load}>
+            <RefreshCw size={13} /> Refresh
+          </button>
+        </div>
       </motion.div>
 
       <motion.div className="card" variants={item}>
         <div className="card-header">
           <h3>Event Log</h3>
           <div style={{ display: 'flex', gap: '6px' }}>
-            {['all', 'granted', 'alert', 'denied'].map(f => (
+            {['all', 'allow', 'denied', 'alert'].map(f => (
               <button
                 key={f}
                 className={`btn btn-sm ${filter === f ? 'btn-primary' : 'btn-ghost'}`}
@@ -67,7 +73,9 @@ export default function EventsPage() {
           </div>
         </div>
         <div className="card-body" style={{ padding: 0 }}>
-          {filtered.length === 0 ? (
+          {loading ? (
+            <div className="empty-state"><Activity size={32} /><h4>Loading events...</h4></div>
+          ) : filtered.length === 0 ? (
             <div className="empty-state">
               <Activity size={32} />
               <h4>No events found</h4>
