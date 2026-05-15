@@ -15,6 +15,7 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 from sqlalchemy import select
+from sqlalchemy.orm import selectinload
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import get_db
@@ -48,6 +49,7 @@ class SwipeResponse(BaseModel):
     session_id: str | None = None
     ghost_detected: bool = False
     ghost_reason: str | None = None
+    ghost_detection_data: dict | None = None  # Enhanced with location/speed/IP details
 
 
 @router.post("/swipe", response_model=SwipeResponse)
@@ -70,7 +72,7 @@ async def process_badge_swipe(
     try:
         asset_uuid = UUID(swipe.asset_id)
     except ValueError:
-        raise HTTPException(status_code=400, detail="Invalid asset_id format")
+        raise HTTPException(status_code=400, detail={"code": "VALIDATION_ERROR", "detail": "Invalid asset_id format"})
 
     asset_result = await db.execute(
         select(Asset).where(Asset.id == asset_uuid, Asset.tenant_id == tenant_id)
@@ -78,12 +80,13 @@ async def process_badge_swipe(
     asset = asset_result.scalar_one_or_none()
 
     if not asset:
-        raise HTTPException(status_code=404, detail="Asset not found")
+        raise HTTPException(status_code=404, detail={"code": "NOT_FOUND", "detail": "Asset not found"})
 
-    # Resolve credential to user
+    # Resolve credential to user (single JOIN query, no N+1)
     credential_result = await db.execute(
         select(Credential)
         .join(User, Credential.user_id == User.id)
+        .options(selectinload(Credential.user))
         .where(
             Credential.credential_value == swipe.credential_value,
             Credential.is_active is True,
@@ -102,20 +105,23 @@ async def process_badge_swipe(
             ghost_detected=False
         )
 
-    user = await db.get(User, credential.user_id)
+    user = credential.user  # Already loaded via selectinload — no extra query
     if not user or user.tenant_id != tenant_id:
-        raise HTTPException(status_code=403, detail="User not authorized for this tenant")
+        raise HTTPException(status_code=403, detail={"code": "FORBIDDEN", "detail": "User not authorized for this tenant"})
 
     user_id = user.id
     occurred_at = datetime.now(UTC)
 
-    # Step 1: Ghost Access Detection
+    # Step 1: Ghost Access Detection (enhanced with configurable thresholds)
     ghost_result = await check_ghost_access(
-        db, user_id, asset_uuid, swipe.credential_value
+        db, user_id, asset_uuid, swipe.credential_value, tenant_id
     )
     ghost_penalty = ghost_result.get("penalty", 0.0)
     ghost_detected = ghost_result.get("ghost_detected", False)
     ghost_reason = ghost_result.get("reason")
+
+    # Get detection data for alert enrichment
+    detection_data = ghost_result.get("detection_data", {})
 
     # Step 2: Get Context (project, temporal, baseline, history scores)
     context = await get_user_asset_context(
@@ -191,8 +197,19 @@ async def process_badge_swipe(
     )
     db.add(event)
 
-    # Step 8: Create alert if trust score is low
-    if trust_score < 0.7:
+    # Step 8: Create alert if trust score is low OR ghost detected
+    if ghost_detected:
+        from app.services.ghost_access import create_ghost_alert
+        await create_ghost_alert(
+            db=db,
+            tenant_id=tenant_id,
+            user_id=user_id,
+            asset_id=asset_uuid,
+            ghost_result=ghost_result,
+            session_id=UUID(session_id) if session_id else None,
+            trust_score=trust_score
+        )
+    elif trust_score < 0.7:
         await create_access_alert(
             db=db,
             tenant_id=tenant_id,
@@ -237,7 +254,8 @@ async def process_badge_swipe(
         },
         session_id=session_id,
         ghost_detected=ghost_detected,
-        ghost_reason=ghost_reason
+        ghost_reason=ghost_reason,
+        ghost_detection_data=detection_data if ghost_detected else None
     )
 
 
@@ -295,7 +313,7 @@ async def simulate_swipe(
     credential = cred_result.scalar_one_or_none()
 
     if not credential:
-        raise HTTPException(status_code=404, detail="No active credentials found")
+        raise HTTPException(status_code=404, detail={"code": "NOT_FOUND", "detail": "No active credentials found"})
 
     swipe_request = SwipeRequest(
         credential_value=credential.credential_value,

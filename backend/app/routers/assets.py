@@ -35,5 +35,5 @@ async def get_asset(
     )
     asset = result.scalar_one_or_none()
     if not asset:
-        raise HTTPException(status_code=404, detail="Asset not found")
+        raise HTTPException(status_code=404, detail={"code": "NOT_FOUND", "detail": "Asset not found"})
     return asset

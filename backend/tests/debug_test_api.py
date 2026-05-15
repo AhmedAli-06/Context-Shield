@@ -1,13 +1,17 @@
 """
 Test login directly via FastAPI TestClient.
 """
-import sys
 import os
+import sys
+
 sys.path.insert(0, os.path.dirname(__file__))
 
-from httpx import AsyncClient, ASGITransport
 import asyncio
+
+from httpx import ASGITransport, AsyncClient
+
 from app.main import app
+
 
 async def test():
     transport = ASGITransport(app=app)

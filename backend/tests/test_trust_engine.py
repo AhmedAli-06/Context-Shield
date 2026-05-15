@@ -1,4 +1,5 @@
-from datetime import datetime, timezone
+from datetime import UTC, datetime
+
 from app.services.trust_engine import TrustScoreEngine, TrustWeights
 
 engine = TrustScoreEngine()
@@ -13,11 +14,11 @@ def test_identity_score_expired_credential():
     assert engine.compute_identity_score(False, True, True) == 0.1
 
 def test_temporal_score_business_hours():
-    dt = datetime(2025, 6, 15, 10, 0, 0, tzinfo=timezone.utc)
+    dt = datetime(2025, 6, 15, 10, 0, 0, tzinfo=UTC)
     assert engine.compute_temporal_score(dt, 7, 19) == 1.0
 
 def test_temporal_score_off_hours():
-    dt = datetime(2025, 6, 15, 3, 0, 0, tzinfo=timezone.utc)
+    dt = datetime(2025, 6, 15, 3, 0, 0, tzinfo=UTC)
     score = engine.compute_temporal_score(dt, 7, 19)
     assert 0.0 < score < 1.0
 
@@ -53,7 +54,7 @@ def test_anomaly_score_high_deviation():
 def test_evaluate_full_trust():
     result = engine.evaluate(
         credential_active=True, user_active=True,
-        occurred_at=datetime(2025, 6, 15, 10, 0, 0, tzinfo=timezone.utc),
+        occurred_at=datetime(2025, 6, 15, 10, 0, 0, tzinfo=UTC),
         typical_start_hour=7, typical_end_hour=19,
         user_on_project=True, asset_on_project=True, project_active=True,
         has_required_role=True, role_level=3, required_level=2,
@@ -66,7 +67,7 @@ def test_evaluate_full_trust():
 def test_evaluate_revocation():
     result = engine.evaluate(
         credential_active=False, user_active=True,
-        occurred_at=datetime(2025, 6, 15, 3, 0, 0, tzinfo=timezone.utc),
+        occurred_at=datetime(2025, 6, 15, 3, 0, 0, tzinfo=UTC),
         user_on_project=False, asset_on_project=False, project_active=False,
         has_required_role=False, role_level=0, required_level=5,
         baseline_exists=True, deviation_sigma=8.0,
@@ -77,7 +78,7 @@ def test_evaluate_revocation():
 def test_evaluate_alert():
     result = engine.evaluate(
         credential_active=True, user_active=True,
-        occurred_at=datetime(2025, 6, 15, 22, 0, 0, tzinfo=timezone.utc),
+        occurred_at=datetime(2025, 6, 15, 22, 0, 0, tzinfo=UTC),
         user_on_project=True, asset_on_project=False, project_active=True,
         has_required_role=True, role_level=1, required_level=1,
         baseline_exists=False,
@@ -94,7 +95,7 @@ def test_alert_threshold():
     e = TrustScoreEngine(alert_threshold=0.8, revocation_threshold=0.3)
     result = e.evaluate(
         credential_active=True, user_active=True,
-        occurred_at=datetime(2025, 6, 15, 22, 0, 0, tzinfo=timezone.utc),
+        occurred_at=datetime(2025, 6, 15, 22, 0, 0, tzinfo=UTC),
         user_on_project=False, asset_on_project=False,
         has_required_role=False,
     )

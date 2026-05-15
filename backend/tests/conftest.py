@@ -1,15 +1,17 @@
 import uuid
+
 import pytest
-from httpx import AsyncClient, ASGITransport
-from sqlalchemy import JSON
-from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, AsyncSession
+from httpx import ASGITransport, AsyncClient
 from sqlalchemy.dialects.postgresql import JSONB
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 from sqlalchemy.ext.compiler import compiles
+
 from app.database import Base, get_db
 from app.main import app
-from app.security import hash_password, create_access_token
 from app.models.auth import AuthUser, Role, UserRole
 from app.models.tenant import Tenant, TenantConfig
+from app.security import create_access_token, hash_password
+
 
 # Make JSONB work with SQLite for testing
 @compiles(JSONB)

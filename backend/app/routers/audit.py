@@ -43,15 +43,15 @@ async def verify_audit_entry_endpoint(
 ):
     log = await db.get(AuditLog, body.log_id)
     if log is None:
-        raise HTTPException(status_code=404, detail="Audit log not found")
+        raise HTTPException(status_code=404, detail={"code": "NOT_FOUND", "detail": "Audit log not found"})
     if log.tenant_id != current_user.tenant_id:
-        raise HTTPException(status_code=403, detail="Access denied")
+        raise HTTPException(status_code=403, detail={"code": "FORBIDDEN", "detail": "Access denied"})
 
     try:
         details = dict(log.details or {})
         stored_hmac = details.pop("_hmac", None)
         if stored_hmac is None:
-            raise HTTPException(status_code=400, detail="Log has no integrity signature")
+            raise HTTPException(status_code=400, detail={"code": "VALIDATION_ERROR", "detail": "Log has no integrity signature"})
 
         signed = {
             "id": str(log.id),
@@ -70,4 +70,4 @@ async def verify_audit_entry_endpoint(
     except HTTPException:
         raise
     except Exception:
-        raise HTTPException(status_code=400, detail="Verification failed")
+        raise HTTPException(status_code=400, detail={"code": "VALIDATION_ERROR", "detail": "Verification failed"})

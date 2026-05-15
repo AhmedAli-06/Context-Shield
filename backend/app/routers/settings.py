@@ -21,7 +21,7 @@ async def get_settings(
     )
     config = result.scalar_one_or_none()
     if not config:
-        raise HTTPException(status_code=404, detail="Settings not found")
+        raise HTTPException(status_code=404, detail={"code": "NOT_FOUND", "detail": "Settings not found"})
     return config
 
 
@@ -36,7 +36,7 @@ async def update_settings(
     )
     config = result.scalar_one_or_none()
     if not config:
-        raise HTTPException(status_code=404, detail="Settings not found")
+        raise HTTPException(status_code=404, detail={"code": "NOT_FOUND", "detail": "Settings not found"})
 
     update_data = updates.model_dump(exclude_none=True)
     for key, value in update_data.items():
