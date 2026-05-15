@@ -124,22 +124,28 @@ async def health():
     return {"status": "ok", "version": "0.2.0-alpha", "service": "contextshield"}
 
 
-# Serve built frontend SPA - catch-all for non-API paths
+# Serve built frontend SPA via middleware (catches 404 after API routes miss)
 from pathlib import Path
 from fastapi.responses import FileResponse
+from starlette.middleware.base import BaseHTTPMiddleware
+from starlette.types import ASGIApp
 
 frontend_dist = Path(__file__).resolve().parent.parent / "static"
 index_html = frontend_dist / "index.html"
 
-@app.get("/", include_in_schema=False)
-async def serve_root():
-    return FileResponse(index_html)
+static_extensions = {".css", ".js", ".svg", ".png", ".ico", ".woff", ".woff2", ".ttf", ".json"}
 
-@app.get("/{full_path:path}", include_in_schema=False)
-async def serve_spa(full_path: str):
-    if full_path.startswith("api/") or full_path.startswith("ws/"):
-        return JSONResponse(status_code=404, content={"detail": "Not Found"})
-    fp = frontend_dist / full_path
-    if fp.exists() and fp.is_file():
-        return FileResponse(fp)
-    return FileResponse(index_html)
+class SPAMiddleware(BaseHTTPMiddleware):
+    async def dispatch(self, request: Request, call_next):
+        response = await call_next(request)
+        path = request.url.path
+        if response.status_code == 404 and not path.startswith("/api/") and not path.startswith("/ws/"):
+            ext = Path(path).suffix
+            if ext in static_extensions:
+                fp = frontend_dist / path.lstrip("/")
+                if fp.exists():
+                    return FileResponse(fp)
+            return FileResponse(index_html)
+        return response
+
+app.add_middleware(SPAMiddleware)
