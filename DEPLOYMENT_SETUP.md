@@ -13,7 +13,7 @@ Login → Project → Variables → Add
 | `JWT_SECRET_KEY` | `contextshield-production-secret-2025-v1` |
 | `JWT_ALGORITHM` | `HS256` |
 | `JWT_ACCESS_TOKEN_EXPIRE_MINUTES` | `480` |
-| `CORS_ORIGINS` | `["https://frontend-delta-six-10.vercel.app","http://localhost:5173"]` |
+| `CORS_ORIGINS` | `["https://context-shield-protection.vercel.app","http://localhost:5173"]` |
 | `RESEND_API_KEY` | `re_REPLACE_ME` |
 | `ALERT_EMAIL` | `alerts@example.com` |
 | `HMAC_SECRET` | `contextshield-production-hmac-secret` |
@@ -36,4 +36,4 @@ URL: https://vercel.com/.../context-shield/settings/environment-variables
 
 **After setting vars:** Trigger redeploy via Vercel dashboard → Deployments → Redeploy latest.
 
-**Verify:** Open https://frontend-delta-six-10.vercel.app and log in.
+**Verify:** Open https://context-shield-protection.vercel.app and log in.
