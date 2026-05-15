@@ -8,7 +8,6 @@ from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
-from fastapi.staticfiles import StaticFiles
 from sqlalchemy import select
 
 logger = logging.getLogger(__name__)
@@ -106,8 +105,21 @@ app.include_router(ws_router)
 app.include_router(access_router)
 app.include_router(ml_router)
 
-# Serve built frontend from static/
-app.mount("/", StaticFiles(directory="static", html=True), name="static")
+# Serve built frontend SPA - catch-all for non-API paths
+from pathlib import Path
+from fastapi.responses import FileResponse
+
+frontend_dist = Path(__file__).resolve().parent.parent / "static"
+index_html = frontend_dist / "index.html"
+
+@app.get("/{full_path:path}", include_in_schema=False)
+async def serve_spa(full_path: str):
+    if full_path.startswith("api/") or full_path.startswith("ws/") or full_path.startswith("health"):
+        return JSONResponse(status_code=404, content={"detail": "Not Found"})
+    fp = frontend_dist / full_path
+    if fp.exists() and fp.is_file():
+        return FileResponse(fp)
+    return FileResponse(index_html)
 
 
 # Global exception handler - catch all unhandled errors and return safe JSON
