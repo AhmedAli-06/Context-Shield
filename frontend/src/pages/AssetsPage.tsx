@@ -4,22 +4,8 @@ import { Shield, Search, Plus, Server, Cpu, Wrench, HardDrive, Box, RefreshCw } 
 import { AssetsSkeleton } from '../components/Skeleton'
 import { getAssets } from '../api'
 
-export default function AssetsPage() {
-  const [assets, setAssets] = useState<Asset[]>([])
-  const [search, setSearch] = useState('')
-  const [loading, setLoading] = useState(true)
-
-  const load = () => {
-    setLoading(true)
-    getAssets()
-      .then(r => setAssets(Array.isArray(r.data) ? r.data : []))
-      .catch(() => {})
-      .finally(() => setLoading(false))
-  }
-
-  useEffect(() => { load() }, [])
-
 const assetIcons: Record<string, any> = {
+  cnc_machine: Cpu,
   server: Server,
   welding_station: Wrench,
   assembly_line: Box,
@@ -57,9 +43,15 @@ export default function AssetsPage() {
 
   const load = () => {
     setLoading(true)
+    getAssets()
+      .then(r => setAssets(Array.isArray(r.data) ? r.data : []))
+      .catch(() => {})
+      .finally(() => setLoading(false))
+  }
+
+  useEffect(() => { load() }, [])
 
   const filtered = assets.filter(a => a.name.toLowerCase().includes(search.toLowerCase()))
-
   const criticalCount = assets.filter(a => a.criticality === 'critical').length
   const highCount = assets.filter(a => a.criticality === 'high').length
   const onlineCount = assets.filter(a => a.status !== 'offline').length
@@ -112,50 +104,19 @@ export default function AssetsPage() {
           <h3>All Assets</h3>
           <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
             <div style={{ position: 'relative' }}>
-              <Search
-                size={14}
-                style={{
-                  position: 'absolute',
-                  left: '10px',
-                  top: '50%',
-                  transform: 'translateY(-50%)',
-                  color: 'var(--stone)',
-                  pointerEvents: 'none',
-                }}
-              />
-              <input
-                className="form-input"
-                style={{ width: '200px', paddingLeft: '32px' }}
-                placeholder="Search assets..."
-                value={search}
-                onChange={e => setSearch(e.target.value)}
-              />
+              <Search size={14} style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', color: 'var(--stone)', pointerEvents: 'none' }} />
+              <input className="form-input" style={{ width: '200px', paddingLeft: '32px' }} placeholder="Search assets..." value={search} onChange={e => setSearch(e.target.value)} />
             </div>
-            <button className="btn btn-primary">
-              <Plus size={14} /> Add Asset
-            </button>
+            <button className="btn btn-primary"><Plus size={14} /> Add Asset</button>
           </div>
         </div>
         <div className="card-body" style={{ padding: 0 }}>
           {filtered.length === 0 ? (
-            <div className="empty-state">
-              <Shield size={32} />
-              <h4>No assets found</h4>
-              <p>Try adjusting your search or add a new asset.</p>
-            </div>
+            <div className="empty-state"><Shield size={32} /><h4>No assets found</h4><p>Try adjusting your search or add a new asset.</p></div>
           ) : (
             <div className="table-wrap">
               <table>
-                <thead>
-                  <tr>
-                    <th>Name</th>
-                    <th>Type</th>
-                    <th>Category</th>
-                    <th>Location</th>
-                    <th>Criticality</th>
-                    <th>Status</th>
-                  </tr>
-                </thead>
+                <thead><tr><th>Name</th><th>Type</th><th>Category</th><th>Location</th><th>Criticality</th><th>Status</th></tr></thead>
                 <tbody>
                   {filtered.map(asset => {
                     const Icon = assetIcons[asset.asset_type] || Shield
@@ -163,44 +124,17 @@ export default function AssetsPage() {
                       <tr key={asset.id}>
                         <td>
                           <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                            <div
-                              style={{
-                                width: 28,
-                                height: 28,
-                                borderRadius: '6px',
-                                background: 'var(--surface-elevated)',
-                                border: '1px solid var(--hairline-strong)',
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                              }}
-                            >
+                            <div style={{ width: 28, height: 28, borderRadius: '6px', background: 'var(--surface-elevated)', border: '1px solid var(--hairline-strong)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                               <Icon size={13} style={{ color: 'var(--charcoal)' }} />
                             </div>
-                            <span style={{ fontWeight: 500, color: 'var(--charcoal)' }}>
-                              {asset.name}
-                            </span>
+                            <span style={{ fontWeight: 500, color: 'var(--charcoal)' }}>{asset.name}</span>
                           </div>
                         </td>
-                        <td style={{ textTransform: 'capitalize' }}>
-                          {asset.asset_type.replace(/_/g, ' ')}
-                        </td>
+                        <td style={{ textTransform: 'capitalize' }}>{asset.asset_type.replace(/_/g, ' ')}</td>
                         <td style={{ textTransform: 'capitalize' }}>{asset.category}</td>
                         <td>{asset.location}</td>
-                        <td>
-                          <span className={`badge ${asset.criticality}`}>
-                            <span className="badge-dot" />
-                            {asset.criticality}
-                          </span>
-                        </td>
-                        <td>
-                          <span
-                            className={`badge ${asset.status === 'offline' ? 'denied' : 'allow'}`}
-                          >
-                            <span className="badge-dot" />
-                            {asset.status || 'active'}
-                          </span>
-                        </td>
+                        <td><span className={`badge ${asset.criticality}`}><span className="badge-dot" />{asset.criticality}</span></td>
+                        <td><span className={`badge ${asset.status === 'offline' ? 'denied' : 'allow'}`}><span className="badge-dot" />{asset.status || 'active'}</span></td>
                       </tr>
                     )
                   })}

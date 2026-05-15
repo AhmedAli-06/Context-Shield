@@ -8,6 +8,7 @@ from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
+from fastapi.staticfiles import StaticFiles
 from sqlalchemy import select
 
 logger = logging.getLogger(__name__)
@@ -104,6 +105,9 @@ app.include_router(audit_router)
 app.include_router(ws_router)
 app.include_router(access_router)
 app.include_router(ml_router)
+
+# Serve built frontend from static/
+app.mount("/", StaticFiles(directory="static", html=True), name="static")
 
 
 # Global exception handler - catch all unhandled errors and return safe JSON
