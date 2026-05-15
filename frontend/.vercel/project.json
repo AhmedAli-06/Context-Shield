@@ -1,0 +1,16 @@
+{
+  "projectId": "prj_tAPzQFeH6CEpr6caxHWnWGp0ad6v",
+  "orgId": "team_7WRP340js8b6uFwbvGiDb9ex",
+  "projectName": "context-shield",
+  "settings": {
+    "createdAt": 1778580422863,
+    "framework": "vite",
+    "devCommand": null,
+    "installCommand": null,
+    "buildCommand": "npm run build",
+    "outputDirectory": "dist",
+    "rootDirectory": null,
+    "directoryListing": false,
+    "nodeVersion": "24.x"
+  }
+}
