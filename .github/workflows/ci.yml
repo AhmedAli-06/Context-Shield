@@ -107,7 +107,7 @@ jobs:
         run: |
           bash <(curl -fsSL cli.new)
           source "$HOME/.railway/env"
-          railway up -c
+          railway up -c -s awake-caring
         env:
           RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
 
