@@ -1,10 +1,7 @@
 import axios from 'axios'
 
-const isVercel = window.location.hostname.includes('vercel.app') || window.location.hostname.includes('context-shield-protection')
-const API_URL = import.meta.env.VITE_API_URL || 
-  (isVercel 
-    ? 'https://web-production-4831a.up.railway.app/api/v1' 
-    : 'http://localhost:8000/api/v1')
+const isDev = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+const API_URL = import.meta.env.VITE_API_URL || (isDev ? 'http://localhost:8000/api/v1' : '/api/v1')
 
 const api = axios.create({
   baseURL: API_URL,

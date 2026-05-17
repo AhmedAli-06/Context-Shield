@@ -53,7 +53,7 @@ export default function AlertsPage() {
     setLoading(true)
     getAlerts()
       .then(r => setAlerts(Array.isArray(r.data) ? r.data : []))
-      .catch(() => {})
+      .catch(() => toast.error('Failed to load alerts'))
       .finally(() => setLoading(false))
   }
 
@@ -220,8 +220,8 @@ export default function AlertsPage() {
                         justifyContent: 'center',
                         background:
                           alert.severity === 'critical'
-                            ? 'rgba(255,32,71,0.1)'
-                            : 'rgba(255,197,61,0.1)',
+                            ? 'rgba(244,114,182,0.1)'
+                            : 'rgba(251,191,36,0.1)',
                         flexShrink: 0,
                       }}
                     >

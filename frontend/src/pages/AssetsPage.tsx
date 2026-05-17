@@ -45,7 +45,7 @@ export default function AssetsPage() {
     setLoading(true)
     getAssets()
       .then(r => setAssets(Array.isArray(r.data) ? r.data : []))
-      .catch(() => {})
+      .catch(() => {}) // Assets are optional — page works with empty list
       .finally(() => setLoading(false))
   }
 

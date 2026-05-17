@@ -3,7 +3,8 @@ import { motion } from 'framer-motion'
 import { Radio, Activity, Circle, AlertTriangle, CheckCircle, XCircle, Zap } from 'lucide-react'
 import { EmptyState } from '../components/EmptyState'
 
-const WS_URL = import.meta.env.VITE_WS_URL || 'ws://localhost:8000/ws/live'
+const isDev = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+const WS_URL = import.meta.env.VITE_WS_URL || (isDev ? 'ws://localhost:8000/ws/live' : `${window.location.protocol === 'https:' ? 'wss:' : 'ws:'}//${window.location.host}/ws/live`)
 
 interface LiveEvent {
   id: string
