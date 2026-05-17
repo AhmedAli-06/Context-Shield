@@ -122,7 +122,6 @@ function AppShell() {
           <div className="logo-mark">CS</div>
           <span className="brand-text">ContextShield</span>
           <span className="brand-version">v0.2</span>
-          <ConnectionStatus />
         </div>
 
           <nav className="sidebar-nav" onClick={() => setMobileMenuOpen(false)}>
@@ -148,6 +147,7 @@ function AppShell() {
             <p>{user?.full_name}</p>
             <span>{user?.email}</span>
           </div>
+          <ConnectionStatus />
           <button className="logout-btn" onClick={logout} title="Sign out">
             <LogOut size={13} />
           </button>

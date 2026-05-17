@@ -13,15 +13,12 @@ const COLORS = {
   blueGlow: 'rgba(75,139,255,0.12)',
   green: '#34d399',
   greenGlow: 'rgba(52,211,153,0.1)',
-  red: '#d44d4d',
-  redGlow: 'rgba(212,77,77,0.12)',
-  redSoft: '#d65d5d',
-  redSoftGlow: 'rgba(214,93,93,0.08)',
+  red: '#c94a4a',
+  redGlow: 'rgba(201,74,74,0.12)',
+  redSoft: '#b84c4c',
+  redSoftGlow: 'rgba(184,76,76,0.08)',
   orange: '#fb923c',
   orangeGlow: 'rgba(251,146,60,0.1)',
-  rose: '#c94a4a',
-  roseGlow: 'rgba(201,74,74,0.1)',
-  cyan: '#22d3ee',
   amber: '#fbbf24',
   surfaceElevated: '#16161c',
   hairline: 'rgba(255,255,255,0.08)',
@@ -127,10 +124,13 @@ export default function DashboardPage() {
     setTimeout(() => setRefreshing(false), 800)
   }
 
-  const hourlyData = Array.from({ length: 24 }, (_, i) => ({
+  const hourlyData = [
+    8,9,12,15,22,45,78,95,82,60,55,58,
+    48,52,85,110,95,78,65,55,42,30,18,10,
+  ].map((v, i) => ({
     hour: `${i.toString().padStart(2, '0')}:00`,
-    events: Math.floor(Math.random() * 25) + 8,
-    baseline: 15,
+    events: v,
+    baseline: 40,
   }))
 
   const chartTooltipStyle = {
@@ -161,13 +161,13 @@ export default function DashboardPage() {
           style={{
             display: 'flex', alignItems: 'center', gap: 12,
             padding: '12px 16px', marginBottom: 24,
-            background: `${COLORS.redGlow}`, border: `1px solid rgba(212,77,77,0.2)`,
+            background: `${COLORS.redGlow}`, border: `1px solid rgba(201,74,74,0.2)`,
             borderRadius: 8, fontSize: 13, color: COLORS.red,
           }}
         >
           <AlertCircle size={16} />
           <span>{error}</span>
-          <button className="btn btn-sm" style={{ marginLeft: 'auto', background: 'rgba(212,77,77,0.15)', color: COLORS.red, border: '1px solid rgba(212,77,77,0.2)' }} onClick={load}>
+          <button className="btn btn-sm" style={{ marginLeft: 'auto', background: 'rgba(201,74,74,0.15)', color: COLORS.red, border: '1px solid rgba(201,74,74,0.2)' }} onClick={load}>
             Retry
           </button>
         </motion.div>
