@@ -76,7 +76,7 @@ jobs:
 
       - name: Run tests
         working-directory: frontend
-        run: npm test -- --watchAll=false --passWithNoTests
+        run: npm test
 
       - name: Build
         working-directory: frontend
