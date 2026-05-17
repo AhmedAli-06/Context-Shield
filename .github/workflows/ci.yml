@@ -107,7 +107,7 @@ jobs:
         run: |
           bash <(curl -fsSL cli.new)
           source "$HOME/.railway/env"
-          railway up --service=backend --ci
+          railway up -c
         env:
           RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
 
