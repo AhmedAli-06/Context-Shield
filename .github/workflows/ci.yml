@@ -85,7 +85,7 @@ jobs:
       - name: Copy to backend static
         run: cp -r frontend/dist/* backend/static/
 
-  deploy:
+   deploy:
     needs: [backend, frontend]
     if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
@@ -93,13 +93,27 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Deploy to Railway
-        uses: railwayapp/cli-action@v3
+      - uses: actions/setup-node@v4
         with:
-          projectToken: ${{ secrets.RAILWAY_PROJECT_TOKEN }}
+          node-version: "20"
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install frontend deps & build
+        working-directory: frontend
+        run: |
+          npm ci
+          npm run build
+
+      - name: Copy dist to backend static
+        run: cp -r frontend/dist/* backend/static/
+
+      - name: Deploy to Railway
+        run: |
+          bash <(curl -fsSL cli.new)
+          railway up --service=backend --ci
         env:
           RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
-        run: railway up --service=backend
 
       - name: Deploy to Vercel
         uses: amondnet/vercel-action@v25
