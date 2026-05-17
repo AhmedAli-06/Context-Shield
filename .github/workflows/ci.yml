@@ -85,7 +85,7 @@ jobs:
       - name: Copy to backend static
         run: cp -r frontend/dist/* backend/static/
 
-   deploy:
+  deploy:
     needs: [backend, frontend]
     if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
