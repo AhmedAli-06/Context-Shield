@@ -106,6 +106,7 @@ jobs:
       - name: Deploy to Railway
         run: |
           bash <(curl -fsSL cli.new)
+          source "$HOME/.railway/env"
           railway up --service=backend --ci
         env:
           RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
