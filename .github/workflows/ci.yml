@@ -82,39 +82,4 @@ jobs:
         working-directory: frontend
         run: npm run build
 
-      - uses: actions/upload-artifact@v4
-        with:
-          name: frontend-dist
-          path: frontend/dist
 
-  deploy:
-    needs: [backend, frontend]
-    if: github.ref == 'refs/heads/main'
-    runs-on: ubuntu-latest
-
-    steps:
-      - uses: actions/checkout@v4
-
-      - uses: actions/download-artifact@v4
-        with:
-          name: frontend-dist
-          path: frontend/dist
-
-      - name: Copy dist to backend static
-        run: cp -r frontend/dist/* backend/static/
-
-      - name: Deploy to Railway
-        run: |
-          bash <(curl -fsSL cli.new)
-          source "$HOME/.railway/env"
-          railway up -c -s awake-caring
-        env:
-          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
-
-      - name: Deploy to Vercel
-        uses: amondnet/vercel-action@v25
-        with:
-          vercel-token: ${{ secrets.VERCEL_TOKEN }}
-          vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
-          vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
-          vercel-args: '--prod'
