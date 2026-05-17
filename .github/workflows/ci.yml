@@ -82,6 +82,9 @@ jobs:
         working-directory: frontend
         run: npm run build
 
+      - name: Copy to backend static
+        run: cp -r frontend/dist/* backend/static/
+
   deploy:
     needs: [backend, frontend]
     if: github.ref == 'refs/heads/main'
@@ -90,12 +93,18 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
+      - name: Deploy to Railway
+        uses: railwayapp/cli-action@v3
+        with:
+          projectToken: ${{ secrets.RAILWAY_PROJECT_TOKEN }}
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+        run: railway up --service=backend
 
-      - name: Build Docker image
-        run: |
-          docker build \
-            -t contextshield:${{ github.sha }} \
-            -t contextshield:latest \
-            .
+      - name: Deploy to Vercel
+        uses: amondnet/vercel-action@v25
+        with:
+          vercel-token: ${{ secrets.VERCEL_TOKEN }}
+          vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
+          vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
+          vercel-args: '--prod'
