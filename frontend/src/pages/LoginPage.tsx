@@ -55,7 +55,7 @@ function ParticleCanvas() {
         if (p.y < 0) p.y = h; if (p.y > h) p.y = 0
         ctx!.beginPath()
         ctx!.arc(p.x, p.y, p.s, 0, Math.PI * 2)
-        ctx!.fillStyle = `rgba(124, 111, 240, ${p.a})`
+        ctx!.fillStyle = `rgba(212, 77, 77, ${p.a})`
         ctx!.fill()
       }
       for (let i = 0; i < particles.length; i++) {
@@ -67,7 +67,7 @@ function ParticleCanvas() {
             ctx!.beginPath()
             ctx!.moveTo(particles[i].x, particles[i].y)
             ctx!.lineTo(particles[j].x, particles[j].y)
-            ctx!.strokeStyle = `rgba(124, 111, 240, ${0.06 * (1 - dist / 120)})`
+            ctx!.strokeStyle = `rgba(212, 77, 77, ${0.06 * (1 - dist / 120)})`
             ctx!.lineWidth = 0.5
             ctx!.stroke()
           }
@@ -117,7 +117,7 @@ function FloatingCard() {
     >
       <div style={{ padding: 24, display: 'flex', flexDirection: 'column', gap: 12 }}>
         <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-          <Shield size={14} color="#7c6ff0" />
+          <Shield size={14} color="#d44d4d" />
           <span style={{ fontSize: 11, color: 'rgba(237,238,243,0.6)' }}>Real-time Protection</span>
         </div>
         <div style={{ display: 'flex', gap: 16 }}>
@@ -130,7 +130,7 @@ function FloatingCard() {
             <span style={{ fontSize: 10, color: 'rgba(237,238,243,0.4)' }}>3 alerts</span>
           </div>
         </div>
-        <div style={{ height: 2, background: 'linear-gradient(90deg, rgba(124,111,240,0.4), rgba(75,139,255,0.1))', borderRadius: 1 }} />
+        <div style={{ height: 2, background: 'linear-gradient(90deg, rgba(212,77,77,0.4), rgba(75,139,255,0.1))', borderRadius: 1 }} />
         <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 10, color: 'rgba(237,238,243,0.3)' }}>
           <span>Trust Score: 94%</span>
           <span>Active: 20</span>

@@ -220,7 +220,7 @@ export default function AlertsPage() {
                         justifyContent: 'center',
                         background:
                           alert.severity === 'critical'
-                            ? 'rgba(244,114,182,0.1)'
+                            ? 'rgba(212,77,77,0.1)'
                             : 'rgba(251,191,36,0.1)',
                         flexShrink: 0,
                       }}

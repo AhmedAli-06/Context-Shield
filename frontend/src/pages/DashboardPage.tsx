@@ -13,12 +13,14 @@ const COLORS = {
   blueGlow: 'rgba(75,139,255,0.12)',
   green: '#34d399',
   greenGlow: 'rgba(52,211,153,0.1)',
-  indigo: '#7c6ff0',
-  indigoGlow: 'rgba(124,111,240,0.12)',
+  red: '#d44d4d',
+  redGlow: 'rgba(212,77,77,0.12)',
+  redSoft: '#d65d5d',
+  redSoftGlow: 'rgba(214,93,93,0.08)',
   orange: '#fb923c',
   orangeGlow: 'rgba(251,146,60,0.1)',
-  rose: '#f472b6',
-  roseGlow: 'rgba(244,114,182,0.1)',
+  rose: '#c94a4a',
+  roseGlow: 'rgba(201,74,74,0.1)',
   cyan: '#22d3ee',
   amber: '#fbbf24',
   surfaceElevated: '#16161c',
@@ -27,12 +29,12 @@ const COLORS = {
   ink: '#edeef3',
 }
 
-const trustColor = (v: number) => v >= 0.7 ? COLORS.green : v >= 0.4 ? COLORS.amber : COLORS.rose
+const trustColor = (v: number) => v >= 0.7 ? COLORS.green : v >= 0.4 ? COLORS.amber : COLORS.red
 
 const decisionData = [
   { name: 'Granted', value: 723, color: COLORS.green },
   { name: 'Alert', value: 89, color: COLORS.amber },
-  { name: 'Revoked', value: 23, color: COLORS.rose },
+  { name: 'Revoked', value: 23, color: COLORS.red },
 ]
 
 const weeklyData = [
@@ -159,13 +161,13 @@ export default function DashboardPage() {
           style={{
             display: 'flex', alignItems: 'center', gap: 12,
             padding: '12px 16px', marginBottom: 24,
-            background: `${COLORS.roseGlow}`, border: `1px solid rgba(244,114,182,0.2)`,
-            borderRadius: 8, fontSize: 13, color: COLORS.rose,
+            background: `${COLORS.redGlow}`, border: `1px solid rgba(212,77,77,0.2)`,
+            borderRadius: 8, fontSize: 13, color: COLORS.red,
           }}
         >
           <AlertCircle size={16} />
           <span>{error}</span>
-          <button className="btn btn-sm" style={{ marginLeft: 'auto', background: 'rgba(244,114,182,0.15)', color: COLORS.rose, border: '1px solid rgba(244,114,182,0.2)' }} onClick={load}>
+          <button className="btn btn-sm" style={{ marginLeft: 'auto', background: 'rgba(212,77,77,0.15)', color: COLORS.red, border: '1px solid rgba(212,77,77,0.2)' }} onClick={load}>
             Retry
           </button>
         </motion.div>
@@ -197,7 +199,7 @@ export default function DashboardPage() {
               <div className="stat-change down"><ArrowDownRight size={12} /> View event log</div>
             </div>
             <div className="stat-card" onClick={() => navigate('/alerts')} style={{ cursor: 'pointer' }}>
-              <div className="stat-glow" style={{ background: COLORS.roseGlow }} />
+              <div className="stat-glow" style={{ background: COLORS.redGlow }} />
               <div className="stat-label">Active Alerts</div>
               <div className="stat-value">{stats.alertsActive}</div>
               <div className="stat-change neutral">Requires attention</div>
